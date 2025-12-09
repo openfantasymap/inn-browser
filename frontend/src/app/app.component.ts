@@ -99,9 +99,54 @@ export class AppComponent implements OnInit, OnDestroy {
       'merchant': '💼',
       'noble': '👔',
       'adventurer': '⚔️',
-      'wizard': '🧙'
+      'wizard': '🧙',
+      'bandit': '🗡️',
+      'monk': '🙏',
+      'bard': '🎵',
+      'dragon_disguised': '🐉',
+      'beggar': '🤲',
+      'prince': '🤴',
+      'thief': '🥷',
+      'scholar': '📚',
+      'drunk': '🍺',
+      'ghost': '👻'
     };
     return displays[guestType] || '👤';
+  }
+
+  getGuestTypeName(guestType: string): string {
+    const names: { [key: string]: string } = {
+      'peasant': 'Peasant',
+      'merchant': 'Merchant',
+      'noble': 'Noble',
+      'adventurer': 'Adventurer',
+      'wizard': 'Wizard',
+      'bandit': 'Bandit',
+      'monk': 'Monk',
+      'bard': 'Bard',
+      'dragon_disguised': 'Dragon',
+      'beggar': 'Beggar',
+      'prince': 'Prince',
+      'thief': 'Thief',
+      'scholar': 'Scholar',
+      'drunk': 'Drunk',
+      'ghost': 'Ghost'
+    };
+    return names[guestType] || 'Guest';
+  }
+
+  getReputationColor(reputation: number): string {
+    if (reputation >= 1.0) return '#10b981';  // Green for high rep
+    if (reputation >= 0.5) return '#3b82f6';  // Blue for good rep
+    if (reputation >= 0) return '#6b7280';    // Gray for neutral
+    return '#ef4444';  // Red for negative rep
+  }
+
+  getGoldColor(gold: number): string {
+    if (gold >= 5.0) return '#f59e0b';   // Orange for very high
+    if (gold >= 2.0) return '#fbbf24';   // Yellow for high
+    if (gold >= 1.0) return '#84cc16';   // Light green for medium
+    return '#9ca3af';  // Gray for low
   }
 
   getRoomCost(roomType: RoomType): number {

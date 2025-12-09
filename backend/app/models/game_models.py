@@ -17,6 +17,16 @@ class GuestType(str, Enum):
     NOBLE = "noble"
     ADVENTURER = "adventurer"
     WIZARD = "wizard"
+    BANDIT = "bandit"  # Alto guadagno, bassa reputazione
+    MONK = "monk"  # Basso guadagno, alta reputazione
+    BARD = "bard"  # Medio guadagno, alta reputazione
+    DRAGON_DISGUISED = "dragon_disguised"  # Altissimo guadagno, reputazione casuale
+    BEGGAR = "beggar"  # Bassissimo guadagno, media reputazione
+    PRINCE = "prince"  # Alto guadagno, altissima reputazione
+    THIEF = "thief"  # Alto guadagno, reputazione negativa
+    SCHOLAR = "scholar"  # Basso guadagno, alta reputazione
+    DRUNK = "drunk"  # Medio guadagno, bassa reputazione
+    GHOST = "ghost"  # Nessun guadagno, alta reputazione (speciale)
 
 
 class Room(BaseModel):

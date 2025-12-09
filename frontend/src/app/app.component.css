@@ -301,13 +301,30 @@
   font-size: 1.5em;
 }
 
+.guest-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .guest-name {
   font-weight: bold;
   color: #4c1d95;
+  font-size: 0.95em;
+}
+
+.guest-type {
+  font-size: 0.75em;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 .guest-details {
   font-size: 0.85em;
+}
+
+.stat-value {
+  font-weight: 600;
 }
 
 .detail-row {

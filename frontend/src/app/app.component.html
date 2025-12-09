@@ -114,16 +114,23 @@
                (click)="selectGuest(guest)">
             <div class="guest-header">
               <span class="guest-icon">{{ getGuestTypeDisplay(guest.guest_type) }}</span>
-              <span class="guest-name">{{ guest.name }}</span>
+              <div class="guest-title">
+                <span class="guest-name">{{ guest.name }}</span>
+                <span class="guest-type">{{ getGuestTypeName(guest.guest_type) }}</span>
+              </div>
             </div>
             <div class="guest-details">
               <div class="detail-row">
-                <span>💰 Pay:</span>
-                <span>{{ guest.gold_per_tick }}/tick</span>
+                <span>💰 Gold:</span>
+                <span class="stat-value" [style.color]="getGoldColor(guest.gold_per_tick)">
+                  {{ guest.gold_per_tick | number:'1.1-2' }}/tick
+                </span>
               </div>
               <div class="detail-row">
                 <span>⭐ Rep:</span>
-                <span>+{{ guest.reputation_bonus }}</span>
+                <span class="stat-value" [style.color]="getReputationColor(guest.reputation_bonus)">
+                  {{ guest.reputation_bonus >= 0 ? '+' : '' }}{{ guest.reputation_bonus | number:'1.1-2' }}
+                </span>
               </div>
               <div class="detail-row">
                 <span>⏱️ Stay:</span>

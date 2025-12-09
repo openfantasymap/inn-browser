@@ -10,7 +10,17 @@ export enum GuestType {
   MERCHANT = 'merchant',
   NOBLE = 'noble',
   ADVENTURER = 'adventurer',
-  WIZARD = 'wizard'
+  WIZARD = 'wizard',
+  BANDIT = 'bandit',
+  MONK = 'monk',
+  BARD = 'bard',
+  DRAGON_DISGUISED = 'dragon_disguised',
+  BEGGAR = 'beggar',
+  PRINCE = 'prince',
+  THIEF = 'thief',
+  SCHOLAR = 'scholar',
+  DRUNK = 'drunk',
+  GHOST = 'ghost'
 }
 
 export interface Room {

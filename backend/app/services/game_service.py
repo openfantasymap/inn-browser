@@ -14,7 +14,11 @@ class GameService:
         self.guest_names = [
             "Aldric", "Brunhilde", "Cedric", "Elara", "Finnian",
             "Gwendolyn", "Thorne", "Isolde", "Magnus", "Rosalind",
-            "Gareth", "Freya", "Ragnar", "Sylvia", "Oswald"
+            "Gareth", "Freya", "Ragnar", "Sylvia", "Oswald",
+            "Bjorn", "Aria", "Dorian", "Lyra", "Cassius",
+            "Seraphina", "Orion", "Luna", "Dante", "Aurora",
+            "Zephyr", "Celeste", "Raven", "Phoenix", "Sage",
+            "Grimwald", "Mystique", "Shadow", "Titus", "Ophelia"
         ]
 
     def create_new_game(self, player_id: str) -> InnState:
@@ -166,28 +170,61 @@ class GameService:
             self._spawn_guest(game_state)
 
     def _spawn_guest(self, game_state: InnState):
-        """Spawn a new guest"""
+        """Spawn a new guest with randomized attributes"""
         guest_type = random.choice(list(GuestType))
 
-        # Guest attributes based on type
-        type_multipliers = {
-            GuestType.PEASANT: (0.5, 0.1),
-            GuestType.MERCHANT: (1.5, 0.3),
-            GuestType.NOBLE: (3.0, 0.5),
-            GuestType.ADVENTURER: (2.0, 0.4),
-            GuestType.WIZARD: (4.0, 0.8),
+        # Base attributes for each guest type with ranges for randomization
+        # Format: (base_gold_min, base_gold_max, base_rep_min, base_rep_max, rarity_weight)
+        type_configs = {
+            GuestType.PEASANT: (0.3, 0.7, 0.05, 0.15, 10),  # Comune
+            GuestType.MERCHANT: (1.0, 2.0, 0.2, 0.4, 8),  # Comune
+            GuestType.NOBLE: (2.5, 4.0, 0.4, 0.7, 5),  # Non comune
+            GuestType.ADVENTURER: (1.5, 2.5, 0.3, 0.5, 7),  # Comune
+            GuestType.WIZARD: (3.0, 5.0, 0.6, 1.0, 4),  # Raro
+            GuestType.BANDIT: (2.0, 4.0, -0.3, 0.1, 6),  # Alto oro, bassa/negativa rep
+            GuestType.MONK: (0.2, 0.5, 0.8, 1.5, 5),  # Basso oro, alta rep
+            GuestType.BARD: (1.0, 1.5, 0.7, 1.2, 6),  # Medio oro, alta rep
+            GuestType.DRAGON_DISGUISED: (8.0, 15.0, -0.5, 2.0, 1),  # Rarissimo, stats estremi
+            GuestType.BEGGAR: (0.1, 0.3, 0.2, 0.4, 8),  # Bassissimo oro
+            GuestType.PRINCE: (4.0, 7.0, 1.5, 3.0, 2),  # Molto raro, ottimi stats
+            GuestType.THIEF: (2.5, 4.5, -0.5, -0.1, 5),  # Alto oro, rep negativa
+            GuestType.SCHOLAR: (0.5, 1.0, 0.9, 1.6, 6),  # Basso oro, alta rep
+            GuestType.DRUNK: (1.2, 2.0, -0.2, 0.2, 7),  # Medio oro, bassa rep
+            GuestType.GHOST: (0.0, 0.1, 1.0, 2.5, 3),  # Quasi nessun oro, altissima rep
         }
 
-        gold_mult, rep_bonus = type_multipliers.get(guest_type, (1.0, 0.2))
+        # Weighted random selection based on rarity
+        types_list = list(type_configs.keys())
+        weights = [type_configs[t][4] for t in types_list]
+        guest_type = random.choices(types_list, weights=weights)[0]
+
+        config = type_configs[guest_type]
+
+        # Generate random attributes within the type's range
+        gold_per_tick = round(random.uniform(config[0], config[1]), 2)
+        reputation_bonus = round(random.uniform(config[2], config[3]), 2)
+
+        # Add some extra randomization (±20%) to make each guest unique
+        variation = random.uniform(0.8, 1.2)
+        gold_per_tick = max(0, round(gold_per_tick * variation, 2))
+        reputation_bonus = round(reputation_bonus * variation, 2)
+
+        # Random stay duration based on guest type
+        if guest_type in [GuestType.BEGGAR, GuestType.DRUNK]:
+            stay_duration = random.randint(3, 8)  # Short stay
+        elif guest_type in [GuestType.NOBLE, GuestType.PRINCE, GuestType.WIZARD]:
+            stay_duration = random.randint(15, 30)  # Long stay
+        else:
+            stay_duration = random.randint(8, 20)  # Normal stay
 
         guest = Guest(
             id=str(uuid.uuid4()),
             name=random.choice(self.guest_names),
             guest_type=guest_type,
             patience=100.0,
-            gold_per_tick=gold_mult,
-            reputation_bonus=rep_bonus,
-            stay_duration=random.randint(5, 20)
+            gold_per_tick=gold_per_tick,
+            reputation_bonus=reputation_bonus,
+            stay_duration=stay_duration
         )
 
         game_state.guests.append(guest)
