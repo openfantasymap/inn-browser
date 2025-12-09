@@ -4,9 +4,9 @@ backend/venv/
 backend/.env
 
 # Backend Django
-backend_django/__pycache__/
-backend_django/*/__pycache__/
-backend_django/*/*/__pycache__/
+backend_django/**/__pycache__/
+backend_django/**/*.pyc
+backend_django/**/*.pyo
 backend_django/db.sqlite3
 backend_django/*.sqlite3
 backend_django/venv/
