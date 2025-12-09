@@ -3,6 +3,15 @@ backend/__pycache__/
 backend/venv/
 backend/.env
 
+# Backend Django
+backend_django/__pycache__/
+backend_django/*/__pycache__/
+backend_django/*/*/__pycache__/
+backend_django/db.sqlite3
+backend_django/*.sqlite3
+backend_django/venv/
+backend_django/.env
+
 # Frontend
 frontend/node_modules/
 frontend/dist/
