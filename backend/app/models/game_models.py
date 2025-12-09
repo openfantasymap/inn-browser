@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
 from enum import Enum
 from datetime import datetime
 
@@ -39,6 +39,45 @@ class Room(BaseModel):
     cleanliness: float = Field(default=100.0, ge=0, le=100)
 
 
+class ItemType(str, Enum):
+    FOOD = "food"
+    BEVERAGE = "beverage"
+
+
+class ItemQuality(str, Enum):
+    BASIC = "basic"
+    GOOD = "good"
+    FINE = "fine"
+    EXQUISITE = "exquisite"
+    LEGENDARY = "legendary"
+
+
+class TavernItem(BaseModel):
+    id: str
+    name: str
+    item_type: ItemType
+    quality: ItemQuality
+    cost: float  # Cost to produce/buy
+    gold_bonus: float = 0.0  # Extra gold per tick when served
+    patience_bonus: float = 0.0  # Patience restored
+    reputation_bonus: float = 0.0  # Extra reputation
+    satisfaction_bonus: float = 0.0  # Overall satisfaction increase
+    description: str = ""
+
+
+class Recipe(BaseModel):
+    id: str
+    name: str
+    item_id: str  # The item this recipe creates
+    unlocked: bool = False
+    cost_to_unlock: float = 0.0
+    ingredients_cost: float = 0.0  # Cost in gold to craft
+
+
+class Inventory(BaseModel):
+    items: Dict[str, int] = Field(default_factory=dict)  # item_id -> quantity
+
+
 class Guest(BaseModel):
     id: str
     name: str
@@ -49,6 +88,11 @@ class Guest(BaseModel):
     reputation_bonus: float = 0.1
     check_in_time: Optional[datetime] = None
     stay_duration: int = 10  # ticks
+    fed: bool = False  # Has been served food
+    served_drink: bool = False  # Has been served beverage
+    satisfaction: float = Field(default=50.0, ge=0, le=100)  # Guest satisfaction
+    food_served: Optional[str] = None  # ID of food item served
+    beverage_served: Optional[str] = None  # ID of beverage served
 
 
 class Upgrade(BaseModel):
@@ -76,6 +120,11 @@ class InnState(BaseModel):
     auto_clean_enabled: bool = False
     last_update: datetime = Field(default_factory=datetime.utcnow)
     game_speed: float = 1.0  # Ticks per second
+    # Tavern system
+    tavern_items: List[TavernItem] = Field(default_factory=list)
+    recipes: List[Recipe] = Field(default_factory=list)
+    inventory: Inventory = Field(default_factory=Inventory)
+    tavern_unlocked: bool = False
 
 
 class GameAction(BaseModel):

@@ -33,6 +33,45 @@ export interface Room {
   cleanliness: number;
 }
 
+export enum ItemType {
+  FOOD = 'food',
+  BEVERAGE = 'beverage'
+}
+
+export enum ItemQuality {
+  BASIC = 'basic',
+  GOOD = 'good',
+  FINE = 'fine',
+  EXQUISITE = 'exquisite',
+  LEGENDARY = 'legendary'
+}
+
+export interface TavernItem {
+  id: string;
+  name: string;
+  item_type: ItemType;
+  quality: ItemQuality;
+  cost: number;
+  gold_bonus: number;
+  patience_bonus: number;
+  reputation_bonus: number;
+  satisfaction_bonus: number;
+  description: string;
+}
+
+export interface Recipe {
+  id: string;
+  name: string;
+  item_id: string;
+  unlocked: boolean;
+  cost_to_unlock: number;
+  ingredients_cost: number;
+}
+
+export interface Inventory {
+  items: { [key: string]: number };
+}
+
 export interface Guest {
   id: string;
   name: string;
@@ -43,6 +82,11 @@ export interface Guest {
   reputation_bonus: number;
   check_in_time: string | null;
   stay_duration: number;
+  fed: boolean;
+  served_drink: boolean;
+  satisfaction: number;
+  food_served: string | null;
+  beverage_served: string | null;
 }
 
 export interface Upgrade {
@@ -70,4 +114,8 @@ export interface InnState {
   auto_clean_enabled: boolean;
   last_update: string;
   game_speed: number;
+  tavern_items: TavernItem[];
+  recipes: Recipe[];
+  inventory: Inventory;
+  tavern_unlocked: boolean;
 }

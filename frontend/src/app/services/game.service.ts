@@ -85,4 +85,33 @@ export class GameService {
       tap(state => this.gameStateSubject.next(state))
     );
   }
+
+  unlockRecipe(recipeId: string): Observable<InnState> {
+    return this.http.post<InnState>(
+      `${this.apiUrl}/unlock-recipe/${this.playerId}/${recipeId}`,
+      {}
+    ).pipe(
+      tap(state => this.gameStateSubject.next(state))
+    );
+  }
+
+  craftItem(itemId: string, quantity: number = 1): Observable<InnState> {
+    return this.http.post<InnState>(
+      `${this.apiUrl}/craft-item/${this.playerId}`,
+      null,
+      { params: { item_id: itemId, quantity: quantity.toString() } }
+    ).pipe(
+      tap(state => this.gameStateSubject.next(state))
+    );
+  }
+
+  serveGuest(guestId: string, itemId: string): Observable<InnState> {
+    return this.http.post<InnState>(
+      `${this.apiUrl}/serve-guest/${this.playerId}`,
+      null,
+      { params: { guest_id: guestId, item_id: itemId } }
+    ).pipe(
+      tap(state => this.gameStateSubject.next(state))
+    );
+  }
 }

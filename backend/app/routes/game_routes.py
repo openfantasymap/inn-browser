@@ -45,3 +45,21 @@ async def purchase_upgrade(player_id: str, upgrade_id: str):
 async def build_room(player_id: str, room_type: RoomType):
     """Build a new room"""
     return game_service.build_room(player_id, room_type)
+
+
+@router.post("/unlock-recipe/{player_id}/{recipe_id}", response_model=InnState)
+async def unlock_recipe(player_id: str, recipe_id: str):
+    """Unlock a recipe for crafting"""
+    return game_service.unlock_recipe(player_id, recipe_id)
+
+
+@router.post("/craft-item/{player_id}", response_model=InnState)
+async def craft_item(player_id: str, item_id: str, quantity: int = 1):
+    """Craft tavern items"""
+    return game_service.craft_item(player_id, item_id, quantity)
+
+
+@router.post("/serve-guest/{player_id}", response_model=InnState)
+async def serve_guest(player_id: str, guest_id: str, item_id: str):
+    """Serve food or beverage to a guest"""
+    return game_service.serve_guest(player_id, guest_id, item_id)

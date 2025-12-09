@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GameService } from './services/game.service';
-import { InnState, Room, Guest, Upgrade, RoomType } from './models/game.models';
+import { InnState, Room, Guest, Upgrade, RoomType, TavernItem, Recipe, ItemType, ItemQuality } from './models/game.models';
 
 @Component({
   selector: 'app-root',
@@ -161,5 +161,87 @@ export class AppComponent implements OnInit, OnDestroy {
 
   canAffordRoom(roomType: RoomType): boolean {
     return this.gameState ? this.gameState.resources.gold >= this.getRoomCost(roomType) : false;
+  }
+
+  // Tavern functions
+  selectedGuestForServing: Guest | null = null;
+  ItemType = ItemType;
+
+  unlockRecipe(recipe: Recipe): void {
+    if (this.gameState && this.gameState.resources.gold >= recipe.cost_to_unlock) {
+      this.gameService.unlockRecipe(recipe.id).subscribe();
+    }
+  }
+
+  craftItem(item: TavernItem, quantity: number = 1): void {
+    const recipe = this.gameState?.recipes.find(r => r.item_id === item.id);
+    if (recipe && recipe.unlocked && this.gameState) {
+      const cost = recipe.ingredients_cost * quantity;
+      if (this.gameState.resources.gold >= cost) {
+        this.gameService.craftItem(item.id, quantity).subscribe();
+      }
+    }
+  }
+
+  serveItem(guest: Guest, item: TavernItem): void {
+    if (this.hasItemInInventory(item.id)) {
+      this.gameService.serveGuest(guest.id, item.id).subscribe();
+      this.selectedGuestForServing = null;
+    }
+  }
+
+  getItemCount(itemId: string): number {
+    return this.gameState?.inventory.items[itemId] || 0;
+  }
+
+  hasItemInInventory(itemId: string): boolean {
+    return this.getItemCount(itemId) > 0;
+  }
+
+  getItemEmoji(item: TavernItem): string {
+    if (item.item_type === ItemType.FOOD) {
+      switch (item.quality) {
+        case ItemQuality.BASIC: return '🍞';
+        case ItemQuality.GOOD: return '🍗';
+        case ItemQuality.FINE: return '🍖';
+        case ItemQuality.EXQUISITE: return '🐉';
+        default: return '🍴';
+      }
+    } else {
+      switch (item.quality) {
+        case ItemQuality.BASIC: return '🍺';
+        case ItemQuality.GOOD: return '🍷';
+        case ItemQuality.FINE: return '🧉';
+        case ItemQuality.LEGENDARY: return '🍾';
+        default: return '🥤';
+      }
+    }
+  }
+
+  getQualityColor(quality: ItemQuality): string {
+    switch (quality) {
+      case ItemQuality.BASIC: return '#9ca3af';
+      case ItemQuality.GOOD: return '#3b82f6';
+      case ItemQuality.FINE: return '#8b5cf6';
+      case ItemQuality.EXQUISITE: return '#f59e0b';
+      case ItemQuality.LEGENDARY: return '#ef4444';
+      default: return '#6b7280';
+    }
+  }
+
+  getFoodItems(): TavernItem[] {
+    return this.gameState?.tavern_items.filter(i => i.item_type === ItemType.FOOD) || [];
+  }
+
+  getBeverageItems(): TavernItem[] {
+    return this.gameState?.tavern_items.filter(i => i.item_type === ItemType.BEVERAGE) || [];
+  }
+
+  canServeFood(guest: Guest): boolean {
+    return !guest.fed;
+  }
+
+  canServeDrink(guest: Guest): boolean {
+    return !guest.served_drink;
   }
 }

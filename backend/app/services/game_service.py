@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 from typing import Dict, List
 from app.models.game_models import (
     InnState, Room, Guest, Upgrade, Resources,
-    RoomType, GuestType
+    RoomType, GuestType, TavernItem, Recipe, Inventory,
+    ItemType, ItemQuality
 )
 
 
@@ -105,7 +106,223 @@ class GameService:
                 effect_type="unlock_room",
                 effect_value=4.0
             ),
+            Upgrade(
+                id="upgrade_tavern",
+                name="Build Tavern",
+                description="Unlock the tavern to serve food and drinks to guests",
+                cost=150.0,
+                effect_type="unlock_tavern",
+                effect_value=1.0
+            ),
         ]
+
+    def _generate_tavern_items(self) -> List[TavernItem]:
+        """Generate all available tavern items"""
+        return [
+            # FOOD - Basic
+            TavernItem(
+                id="food_bread",
+                name="Bread",
+                item_type=ItemType.FOOD,
+                quality=ItemQuality.BASIC,
+                cost=2.0,
+                gold_bonus=0.1,
+                patience_bonus=5.0,
+                satisfaction_bonus=10.0,
+                description="Simple bread, satisfying and cheap"
+            ),
+            TavernItem(
+                id="food_stew",
+                name="Vegetable Stew",
+                item_type=ItemType.FOOD,
+                quality=ItemQuality.BASIC,
+                cost=5.0,
+                gold_bonus=0.2,
+                patience_bonus=10.0,
+                satisfaction_bonus=15.0,
+                description="Warm and hearty stew"
+            ),
+            # FOOD - Good
+            TavernItem(
+                id="food_roast",
+                name="Roasted Chicken",
+                item_type=ItemType.FOOD,
+                quality=ItemQuality.GOOD,
+                cost=12.0,
+                gold_bonus=0.5,
+                patience_bonus=15.0,
+                reputation_bonus=0.1,
+                satisfaction_bonus=25.0,
+                description="Delicious roasted chicken"
+            ),
+            TavernItem(
+                id="food_pie",
+                name="Meat Pie",
+                item_type=ItemType.FOOD,
+                quality=ItemQuality.GOOD,
+                cost=15.0,
+                gold_bonus=0.6,
+                patience_bonus=18.0,
+                reputation_bonus=0.15,
+                satisfaction_bonus=30.0,
+                description="Rich and savory meat pie"
+            ),
+            # FOOD - Fine
+            TavernItem(
+                id="food_feast",
+                name="Royal Feast",
+                item_type=ItemType.FOOD,
+                quality=ItemQuality.FINE,
+                cost=30.0,
+                gold_bonus=1.2,
+                patience_bonus=25.0,
+                reputation_bonus=0.3,
+                satisfaction_bonus=45.0,
+                description="A magnificent feast fit for royalty"
+            ),
+            # FOOD - Exquisite
+            TavernItem(
+                id="food_dragon_steak",
+                name="Dragon Steak",
+                item_type=ItemType.FOOD,
+                quality=ItemQuality.EXQUISITE,
+                cost=80.0,
+                gold_bonus=3.0,
+                patience_bonus=35.0,
+                reputation_bonus=0.8,
+                satisfaction_bonus=60.0,
+                description="Legendary dragon meat, incredibly rare"
+            ),
+
+            # BEVERAGES - Basic
+            TavernItem(
+                id="drink_water",
+                name="Water",
+                item_type=ItemType.BEVERAGE,
+                quality=ItemQuality.BASIC,
+                cost=1.0,
+                patience_bonus=3.0,
+                satisfaction_bonus=5.0,
+                description="Fresh water from the well"
+            ),
+            TavernItem(
+                id="drink_ale",
+                name="Ale",
+                item_type=ItemType.BEVERAGE,
+                quality=ItemQuality.BASIC,
+                cost=3.0,
+                gold_bonus=0.15,
+                patience_bonus=8.0,
+                satisfaction_bonus=12.0,
+                description="Common ale, popular with adventurers"
+            ),
+            # BEVERAGES - Good
+            TavernItem(
+                id="drink_mead",
+                name="Honey Mead",
+                item_type=ItemType.BEVERAGE,
+                quality=ItemQuality.GOOD,
+                cost=10.0,
+                gold_bonus=0.4,
+                patience_bonus=12.0,
+                reputation_bonus=0.1,
+                satisfaction_bonus=20.0,
+                description="Sweet mead made from honey"
+            ),
+            TavernItem(
+                id="drink_wine",
+                name="Fine Wine",
+                item_type=ItemType.BEVERAGE,
+                quality=ItemQuality.GOOD,
+                cost=18.0,
+                gold_bonus=0.7,
+                patience_bonus=15.0,
+                reputation_bonus=0.2,
+                satisfaction_bonus=28.0,
+                description="Quality wine from distant vineyards"
+            ),
+            # BEVERAGES - Fine
+            TavernItem(
+                id="drink_elven_wine",
+                name="Elven Wine",
+                item_type=ItemType.BEVERAGE,
+                quality=ItemQuality.FINE,
+                cost=40.0,
+                gold_bonus=1.5,
+                patience_bonus=20.0,
+                reputation_bonus=0.4,
+                satisfaction_bonus=40.0,
+                description="Mystical wine from the elven forests"
+            ),
+            # BEVERAGES - Legendary
+            TavernItem(
+                id="drink_ambrosia",
+                name="Divine Ambrosia",
+                item_type=ItemType.BEVERAGE,
+                quality=ItemQuality.LEGENDARY,
+                cost=100.0,
+                gold_bonus=4.0,
+                patience_bonus=40.0,
+                reputation_bonus=1.0,
+                satisfaction_bonus=70.0,
+                description="The drink of gods, impossibly rare"
+            ),
+        ]
+
+    def _generate_recipes(self, items: List[TavernItem]) -> List[Recipe]:
+        """Generate recipes for tavern items"""
+        recipes = []
+
+        # Basic items are unlocked by default
+        basic_items = [item for item in items if item.quality == ItemQuality.BASIC]
+        for item in basic_items:
+            recipes.append(Recipe(
+                id=f"recipe_{item.id}",
+                name=f"Recipe: {item.name}",
+                item_id=item.id,
+                unlocked=True,
+                cost_to_unlock=0.0,
+                ingredients_cost=item.cost
+            ))
+
+        # Good quality requires unlocking
+        good_items = [item for item in items if item.quality == ItemQuality.GOOD]
+        for item in good_items:
+            recipes.append(Recipe(
+                id=f"recipe_{item.id}",
+                name=f"Recipe: {item.name}",
+                item_id=item.id,
+                unlocked=False,
+                cost_to_unlock=50.0,
+                ingredients_cost=item.cost
+            ))
+
+        # Fine quality requires more investment
+        fine_items = [item for item in items if item.quality == ItemQuality.FINE]
+        for item in fine_items:
+            recipes.append(Recipe(
+                id=f"recipe_{item.id}",
+                name=f"Recipe: {item.name}",
+                item_id=item.id,
+                unlocked=False,
+                cost_to_unlock=150.0,
+                ingredients_cost=item.cost
+            ))
+
+        # Exquisite and Legendary are very expensive
+        special_items = [item for item in items if item.quality in [ItemQuality.EXQUISITE, ItemQuality.LEGENDARY]]
+        for item in special_items:
+            cost = 500.0 if item.quality == ItemQuality.EXQUISITE else 1000.0
+            recipes.append(Recipe(
+                id=f"recipe_{item.id}",
+                name=f"Recipe: {item.name}",
+                item_id=item.id,
+                unlocked=False,
+                cost_to_unlock=cost,
+                ingredients_cost=item.cost
+            ))
+
+        return recipes
 
     def process_tick(self, player_id: str) -> InnState:
         """Process one game tick"""
@@ -281,6 +498,11 @@ class GameService:
                     income_rate=upgrade.effect_value
                 )
                 game_state.rooms.append(new_room)
+            elif upgrade.effect_type == "unlock_tavern":
+                # Unlock tavern and initialize items and recipes
+                game_state.tavern_unlocked = True
+                game_state.tavern_items = self._generate_tavern_items()
+                game_state.recipes = self._generate_recipes(game_state.tavern_items)
 
         return game_state
 
@@ -314,6 +536,87 @@ class GameService:
                 income_rate=income_rates.get(room_type, 1.0)
             )
             game_state.rooms.append(new_room)
+
+        return game_state
+
+    def unlock_recipe(self, player_id: str, recipe_id: str) -> InnState:
+        """Unlock a recipe"""
+        game_state = self.get_game_state(player_id)
+
+        if not game_state.tavern_unlocked:
+            return game_state
+
+        recipe = next((r for r in game_state.recipes if r.id == recipe_id), None)
+
+        if recipe and not recipe.unlocked and game_state.resources.gold >= recipe.cost_to_unlock:
+            game_state.resources.gold -= recipe.cost_to_unlock
+            recipe.unlocked = True
+
+        return game_state
+
+    def craft_item(self, player_id: str, item_id: str, quantity: int = 1) -> InnState:
+        """Craft tavern items"""
+        game_state = self.get_game_state(player_id)
+
+        if not game_state.tavern_unlocked:
+            return game_state
+
+        # Check if recipe is unlocked
+        recipe = next((r for r in game_state.recipes if r.item_id == item_id), None)
+        if not recipe or not recipe.unlocked:
+            return game_state
+
+        # Calculate total cost
+        total_cost = recipe.ingredients_cost * quantity
+
+        if game_state.resources.gold >= total_cost:
+            game_state.resources.gold -= total_cost
+
+            # Add items to inventory
+            if item_id not in game_state.inventory.items:
+                game_state.inventory.items[item_id] = 0
+            game_state.inventory.items[item_id] += quantity
+
+        return game_state
+
+    def serve_guest(self, player_id: str, guest_id: str, item_id: str) -> InnState:
+        """Serve food or beverage to a guest"""
+        game_state = self.get_game_state(player_id)
+
+        if not game_state.tavern_unlocked:
+            return game_state
+
+        # Check inventory
+        if item_id not in game_state.inventory.items or game_state.inventory.items[item_id] <= 0:
+            return game_state
+
+        # Find guest and item
+        guest = next((g for g in game_state.guests if g.id == guest_id), None)
+        item = next((i for i in game_state.tavern_items if i.id == item_id), None)
+
+        if not guest or not item:
+            return game_state
+
+        # Consume item from inventory
+        game_state.inventory.items[item_id] -= 1
+
+        # Apply bonuses
+        if item.item_type == ItemType.FOOD:
+            if not guest.fed:
+                guest.fed = True
+                guest.food_served = item_id
+                guest.gold_per_tick += item.gold_bonus
+                guest.reputation_bonus += item.reputation_bonus
+                guest.patience = min(100, guest.patience + item.patience_bonus)
+                guest.satisfaction = min(100, guest.satisfaction + item.satisfaction_bonus)
+        elif item.item_type == ItemType.BEVERAGE:
+            if not guest.served_drink:
+                guest.served_drink = True
+                guest.beverage_served = item_id
+                guest.gold_per_tick += item.gold_bonus
+                guest.reputation_bonus += item.reputation_bonus
+                guest.patience = min(100, guest.patience + item.patience_bonus)
+                guest.satisfaction = min(100, guest.satisfaction + item.satisfaction_bonus)
 
         return game_state
 
