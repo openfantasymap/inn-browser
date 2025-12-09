@@ -1,0 +1,170 @@
+<div class="game-container" *ngIf="gameState">
+  <!-- Header -->
+  <header class="game-header">
+    <h1>🏰 {{ title }}</h1>
+    <button class="new-game-btn" (click)="startNewGame()">New Game</button>
+  </header>
+
+  <!-- Resources Panel -->
+  <div class="resources-panel">
+    <div class="resource">
+      <span class="resource-icon">💰</span>
+      <span class="resource-label">Gold:</span>
+      <span class="resource-value">{{ gameState.resources.gold | number:'1.0-0' }}</span>
+    </div>
+    <div class="resource">
+      <span class="resource-icon">⭐</span>
+      <span class="resource-label">Reputation:</span>
+      <span class="resource-value">{{ gameState.resources.reputation | number:'1.0-1' }}</span>
+    </div>
+    <div class="resource">
+      <span class="resource-icon">👥</span>
+      <span class="resource-label">Max Guests:</span>
+      <span class="resource-value">{{ gameState.resources.max_guests }}</span>
+    </div>
+    <div class="resource">
+      <span class="resource-icon">📈</span>
+      <span class="resource-label">Income Multiplier:</span>
+      <span class="resource-value">{{ gameState.total_income_multiplier | number:'1.0-1' }}x</span>
+    </div>
+  </div>
+
+  <!-- Main Game Area -->
+  <div class="game-content">
+    <!-- Rooms Section -->
+    <div class="rooms-section">
+      <h2>🏠 Rooms</h2>
+      <div class="rooms-grid">
+        <div *ngFor="let room of gameState.rooms"
+             class="room-card"
+             [class.occupied]="room.occupied"
+             [class.selected]="selectedGuest"
+             (click)="selectedGuest && assignGuestToRoom(selectedGuest, room)">
+          <div class="room-header">
+            <span class="room-type">{{ getRoomTypeDisplay(room.room_type) }}</span>
+            <span class="room-level">Lv.{{ room.level }}</span>
+          </div>
+
+          <div class="room-info">
+            <div class="info-row">
+              <span>💵 Income Rate:</span>
+              <span>{{ room.income_rate }}x</span>
+            </div>
+            <div class="info-row">
+              <span>🧹 Cleanliness:</span>
+              <span [style.color]="getCleanlinessColor(room.cleanliness)">
+                {{ room.cleanliness | number:'1.0-0' }}%
+              </span>
+            </div>
+          </div>
+
+          <div *ngIf="room.occupied" class="guest-in-room">
+            <div class="guest-info">
+              <span>{{ getGuestTypeDisplay(getGuestInRoom(room.id)?.guest_type || '') }}</span>
+              <span>{{ getGuestInRoom(room.id)?.name }}</span>
+            </div>
+            <div class="patience-bar">
+              <div class="patience-fill"
+                   [style.width.%]="getGuestInRoom(room.id)?.patience || 0"
+                   [style.background-color]="getPatienceColor(getGuestInRoom(room.id)?.patience || 0)">
+              </div>
+            </div>
+          </div>
+
+          <button *ngIf="!room.occupied"
+                  class="clean-btn"
+                  (click)="cleanRoom(room); $event.stopPropagation()">
+            🧹 Clean
+          </button>
+        </div>
+      </div>
+
+      <!-- Build Room Section -->
+      <div class="build-room-section">
+        <h3>Build New Room</h3>
+        <div class="build-buttons">
+          <button (click)="buildRoom(RoomType.BASIC)"
+                  [disabled]="!canAffordRoom(RoomType.BASIC)"
+                  class="build-btn">
+            🛏️ Basic ({{ getRoomCost(RoomType.BASIC) }} gold)
+          </button>
+          <button (click)="buildRoom(RoomType.STANDARD)"
+                  [disabled]="!canAffordRoom(RoomType.STANDARD)"
+                  class="build-btn">
+            🏠 Standard ({{ getRoomCost(RoomType.STANDARD) }} gold)
+          </button>
+          <button (click)="buildRoom(RoomType.DELUXE)"
+                  [disabled]="!canAffordRoom(RoomType.DELUXE)"
+                  class="build-btn">
+            🏰 Deluxe ({{ getRoomCost(RoomType.DELUXE) }} gold)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <!-- Waiting Guests -->
+      <div class="waiting-guests-section">
+        <h2>👥 Waiting Guests ({{ getWaitingGuests().length }})</h2>
+        <div class="guests-list">
+          <div *ngFor="let guest of getWaitingGuests()"
+               class="guest-card"
+               [class.selected]="selectedGuest?.id === guest.id"
+               (click)="selectGuest(guest)">
+            <div class="guest-header">
+              <span class="guest-icon">{{ getGuestTypeDisplay(guest.guest_type) }}</span>
+              <span class="guest-name">{{ guest.name }}</span>
+            </div>
+            <div class="guest-details">
+              <div class="detail-row">
+                <span>💰 Pay:</span>
+                <span>{{ guest.gold_per_tick }}/tick</span>
+              </div>
+              <div class="detail-row">
+                <span>⭐ Rep:</span>
+                <span>+{{ guest.reputation_bonus }}</span>
+              </div>
+              <div class="detail-row">
+                <span>⏱️ Stay:</span>
+                <span>{{ guest.stay_duration }} ticks</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p *ngIf="getWaitingGuests().length === 0" class="empty-message">
+          No guests waiting. They'll arrive soon!
+        </p>
+      </div>
+
+      <!-- Upgrades -->
+      <div class="upgrades-section">
+        <h2>⚡ Upgrades</h2>
+        <div class="upgrades-list">
+          <div *ngFor="let upgrade of gameState.upgrades"
+               class="upgrade-card"
+               [class.purchased]="upgrade.purchased">
+            <div class="upgrade-header">
+              <span class="upgrade-name">{{ upgrade.name }}</span>
+              <span class="upgrade-cost" *ngIf="!upgrade.purchased">
+                {{ upgrade.cost }} 💰
+              </span>
+              <span class="purchased-badge" *ngIf="upgrade.purchased">✓</span>
+            </div>
+            <p class="upgrade-description">{{ upgrade.description }}</p>
+            <button *ngIf="!upgrade.purchased"
+                    class="purchase-btn"
+                    [disabled]="gameState.resources.gold < upgrade.cost"
+                    (click)="purchaseUpgrade(upgrade)">
+              Purchase
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="loading" *ngIf="!gameState">
+  <h2>Loading Fantasy Inn Tycoon...</h2>
+</div>

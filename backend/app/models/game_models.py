@@ -1,0 +1,74 @@
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from enum import Enum
+from datetime import datetime
+
+
+class RoomType(str, Enum):
+    BASIC = "basic"
+    STANDARD = "standard"
+    DELUXE = "deluxe"
+    ROYAL = "royal"
+
+
+class GuestType(str, Enum):
+    PEASANT = "peasant"
+    MERCHANT = "merchant"
+    NOBLE = "noble"
+    ADVENTURER = "adventurer"
+    WIZARD = "wizard"
+
+
+class Room(BaseModel):
+    id: str
+    room_type: RoomType
+    level: int = 1
+    occupied: bool = False
+    current_guest: Optional[str] = None
+    income_rate: float = Field(default=1.0)
+    cleanliness: float = Field(default=100.0, ge=0, le=100)
+
+
+class Guest(BaseModel):
+    id: str
+    name: str
+    guest_type: GuestType
+    room_id: Optional[str] = None
+    patience: float = Field(default=100.0, ge=0, le=100)
+    gold_per_tick: float = 1.0
+    reputation_bonus: float = 0.1
+    check_in_time: Optional[datetime] = None
+    stay_duration: int = 10  # ticks
+
+
+class Upgrade(BaseModel):
+    id: str
+    name: str
+    description: str
+    cost: float
+    purchased: bool = False
+    effect_type: str  # "income_multiplier", "auto_clean", "guest_capacity", etc.
+    effect_value: float
+
+
+class Resources(BaseModel):
+    gold: float = Field(default=100.0)
+    reputation: float = Field(default=0.0)
+    max_guests: int = Field(default=5)
+
+
+class InnState(BaseModel):
+    resources: Resources = Field(default_factory=Resources)
+    rooms: List[Room] = Field(default_factory=list)
+    guests: List[Guest] = Field(default_factory=list)
+    upgrades: List[Upgrade] = Field(default_factory=list)
+    total_income_multiplier: float = 1.0
+    auto_clean_enabled: bool = False
+    last_update: datetime = Field(default_factory=datetime.utcnow)
+    game_speed: float = 1.0  # Ticks per second
+
+
+class GameAction(BaseModel):
+    action_type: str
+    target_id: Optional[str] = None
+    data: Optional[dict] = None
