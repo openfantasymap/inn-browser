@@ -52,6 +52,28 @@ class ItemQuality(str, Enum):
     LEGENDARY = "legendary"
 
 
+class IngredientRarity(str, Enum):
+    COMMON = "common"
+    UNCOMMON = "uncommon"
+    RARE = "rare"
+    EPIC = "epic"
+    LEGENDARY = "legendary"
+
+
+class Ingredient(BaseModel):
+    id: str
+    name: str
+    rarity: IngredientRarity
+    description: str = ""
+    # Drop chances from guests
+    base_drop_chance: float = 0.1  # 10% base chance
+
+
+class IngredientRequirement(BaseModel):
+    ingredient_id: str
+    quantity: int = 1
+
+
 class TavernItem(BaseModel):
     id: str
     name: str
@@ -70,12 +92,19 @@ class Recipe(BaseModel):
     name: str
     item_id: str  # The item this recipe creates
     unlocked: bool = False
+    discovered: bool = False  # Has player discovered this recipe?
     cost_to_unlock: float = 0.0
-    ingredients_cost: float = 0.0  # Cost in gold to craft
+    ingredients_cost: float = 0.0  # Cost in gold to craft (legacy, still used)
+    required_ingredients: List[IngredientRequirement] = Field(default_factory=list)
+    # If empty, uses ingredients_cost as gold-only recipe
 
 
 class Inventory(BaseModel):
     items: Dict[str, int] = Field(default_factory=dict)  # item_id -> quantity
+
+
+class IngredientInventory(BaseModel):
+    ingredients: Dict[str, int] = Field(default_factory=dict)  # ingredient_id -> quantity
 
 
 class Guest(BaseModel):
@@ -125,6 +154,9 @@ class InnState(BaseModel):
     recipes: List[Recipe] = Field(default_factory=list)
     inventory: Inventory = Field(default_factory=Inventory)
     tavern_unlocked: bool = False
+    # Ingredient system
+    available_ingredients: List[Ingredient] = Field(default_factory=list)
+    ingredient_inventory: IngredientInventory = Field(default_factory=IngredientInventory)
 
 
 class GameAction(BaseModel):

@@ -5,7 +5,8 @@ from typing import Dict, List
 from app.models.game_models import (
     InnState, Room, Guest, Upgrade, Resources,
     RoomType, GuestType, TavernItem, Recipe, Inventory,
-    ItemType, ItemQuality
+    ItemType, ItemQuality, Ingredient, IngredientRarity,
+    IngredientRequirement, IngredientInventory
 )
 
 
@@ -324,6 +325,128 @@ class GameService:
 
         return recipes
 
+    def _generate_ingredients(self) -> List[Ingredient]:
+        """Generate all available ingredients"""
+        return [
+            # COMMON ingredients
+            Ingredient(
+                id="ing_flour",
+                name="Flour",
+                rarity=IngredientRarity.COMMON,
+                description="Basic flour for baking",
+                base_drop_chance=0.30
+            ),
+            Ingredient(
+                id="ing_water",
+                name="Fresh Water",
+                rarity=IngredientRarity.COMMON,
+                description="Clean water from the well",
+                base_drop_chance=0.35
+            ),
+            Ingredient(
+                id="ing_salt",
+                name="Salt",
+                rarity=IngredientRarity.COMMON,
+                description="Common salt for preserving",
+                base_drop_chance=0.25
+            ),
+            Ingredient(
+                id="ing_herbs",
+                name="Herbs",
+                rarity=IngredientRarity.COMMON,
+                description="Wild herbs from the forest",
+                base_drop_chance=0.30
+            ),
+            # UNCOMMON ingredients
+            Ingredient(
+                id="ing_meat",
+                name="Fresh Meat",
+                rarity=IngredientRarity.UNCOMMON,
+                description="Meat from local hunters",
+                base_drop_chance=0.15
+            ),
+            Ingredient(
+                id="ing_honey",
+                name="Wild Honey",
+                rarity=IngredientRarity.UNCOMMON,
+                description="Sweet honey from forest bees",
+                base_drop_chance=0.12
+            ),
+            Ingredient(
+                id="ing_grapes",
+                name="Grapes",
+                rarity=IngredientRarity.UNCOMMON,
+                description="Fresh grapes for wine",
+                base_drop_chance=0.10
+            ),
+            Ingredient(
+                id="ing_spices",
+                name="Exotic Spices",
+                rarity=IngredientRarity.UNCOMMON,
+                description="Rare spices from distant lands",
+                base_drop_chance=0.08
+            ),
+            # RARE ingredients
+            Ingredient(
+                id="ing_truffle",
+                name="Truffle",
+                rarity=IngredientRarity.RARE,
+                description="Rare truffle mushroom",
+                base_drop_chance=0.05
+            ),
+            Ingredient(
+                id="ing_elven_herbs",
+                name="Elven Herbs",
+                rarity=IngredientRarity.RARE,
+                description="Mystical herbs from elven forests",
+                base_drop_chance=0.04
+            ),
+            Ingredient(
+                id="ing_aged_wine",
+                name="Aged Wine Base",
+                rarity=IngredientRarity.RARE,
+                description="Wine aged in ancient barrels",
+                base_drop_chance=0.03
+            ),
+            # EPIC ingredients
+            Ingredient(
+                id="ing_phoenix_feather",
+                name="Phoenix Feather",
+                rarity=IngredientRarity.EPIC,
+                description="A feather from a phoenix, incredibly rare",
+                base_drop_chance=0.02
+            ),
+            Ingredient(
+                id="ing_dragon_blood",
+                name="Dragon Blood",
+                rarity=IngredientRarity.EPIC,
+                description="Blood from a dragon, very powerful",
+                base_drop_chance=0.015
+            ),
+            Ingredient(
+                id="ing_moonflower",
+                name="Moonflower",
+                rarity=IngredientRarity.EPIC,
+                description="Flower that blooms only under full moon",
+                base_drop_chance=0.01
+            ),
+            # LEGENDARY ingredients
+            Ingredient(
+                id="ing_ambrosia_essence",
+                name="Ambrosia Essence",
+                rarity=IngredientRarity.LEGENDARY,
+                description="Divine essence from the gods",
+                base_drop_chance=0.005
+            ),
+            Ingredient(
+                id="ing_time_crystal",
+                name="Time Crystal",
+                rarity=IngredientRarity.LEGENDARY,
+                description="Crystal that holds the essence of time itself",
+                base_drop_chance=0.003
+            ),
+        ]
+
     def process_tick(self, player_id: str) -> InnState:
         """Process one game tick"""
         game_state = self.get_game_state(player_id)
@@ -377,6 +500,10 @@ class GameService:
                 # Add reputation bonus if guest was happy
                 if guest.patience > 70:
                     game_state.resources.reputation += guest.reputation_bonus
+
+                # Drop ingredients if tavern is unlocked and guest is satisfied
+                if game_state.tavern_unlocked and guest.satisfaction >= 80:
+                    self._drop_ingredients_from_guest(game_state, guest)
 
                 guests_to_remove.append(guest.id)
 
@@ -446,6 +573,37 @@ class GameService:
 
         game_state.guests.append(guest)
 
+    def _drop_ingredients_from_guest(self, game_state: InnState, guest: Guest):
+        """Drop ingredients from satisfied guests"""
+        # Merchants have 2x chance, others use satisfaction as multiplier
+        chance_multiplier = 2.0 if guest.guest_type == GuestType.MERCHANT else (guest.satisfaction / 100.0)
+
+        # Each ingredient has its own drop chance
+        for ingredient in game_state.available_ingredients:
+            # Base chance modified by guest type and satisfaction
+            drop_chance = ingredient.base_drop_chance * chance_multiplier
+
+            # Nobles, Princes, and Wizards have bonus for rare ingredients
+            if guest.guest_type in [GuestType.NOBLE, GuestType.PRINCE, GuestType.WIZARD]:
+                if ingredient.rarity in [IngredientRarity.RARE, IngredientRarity.EPIC, IngredientRarity.LEGENDARY]:
+                    drop_chance *= 1.5
+
+            # Dragons drop epic/legendary ingredients more frequently
+            if guest.guest_type == GuestType.DRAGON_DISGUISED:
+                if ingredient.rarity in [IngredientRarity.EPIC, IngredientRarity.LEGENDARY]:
+                    drop_chance *= 3.0
+
+            # Roll for drop
+            if random.random() < drop_chance:
+                quantity = 1
+                # Rare chance for multiple drops (merchants especially)
+                if guest.guest_type == GuestType.MERCHANT and random.random() < 0.3:
+                    quantity = random.randint(2, 3)
+
+                if ingredient.id not in game_state.ingredient_inventory.ingredients:
+                    game_state.ingredient_inventory.ingredients[ingredient.id] = 0
+                game_state.ingredient_inventory.ingredients[ingredient.id] += quantity
+
     def assign_guest_to_room(self, player_id: str, guest_id: str, room_id: str) -> InnState:
         """Assign a guest to a room"""
         game_state = self.get_game_state(player_id)
@@ -499,10 +657,11 @@ class GameService:
                 )
                 game_state.rooms.append(new_room)
             elif upgrade.effect_type == "unlock_tavern":
-                # Unlock tavern and initialize items and recipes
+                # Unlock tavern and initialize items, recipes, and ingredients
                 game_state.tavern_unlocked = True
                 game_state.tavern_items = self._generate_tavern_items()
                 game_state.recipes = self._generate_recipes(game_state.tavern_items)
+                game_state.available_ingredients = self._generate_ingredients()
 
         return game_state
 
