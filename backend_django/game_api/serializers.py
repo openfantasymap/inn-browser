@@ -57,7 +57,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ['id', 'name', 'item_id', 'unlocked', 'discovered',
-                  'cost_to_unlock', 'required_ingredients']
+                  'cost_to_unlock', 'ingredients_cost', 'required_ingredients']
 
 
 class UpgradeSerializer(serializers.ModelSerializer):
@@ -76,30 +76,35 @@ class GameStateSerializer(serializers.ModelSerializer):
     guests = GuestSerializer(many=True, read_only=True)
     upgrades = UpgradeSerializer(many=True, read_only=True)
     recipes = RecipeSerializer(many=True, read_only=True)
-    available_items = serializers.SerializerMethodField()
-    available_ingredients = serializers.SerializerMethodField()
 
-    # Map resources to top-level fields for compatibility with frontend
+    # Angular expects these field names
+    tavern_items = serializers.SerializerMethodField()
+    available_ingredients = serializers.SerializerMethodField()
     resources = serializers.SerializerMethodField()
+    inventory = serializers.SerializerMethodField()
 
     class Meta:
         model = GameState
-        fields = ['player_id', 'gold', 'reputation', 'max_guests',
+        fields = ['resources', 'rooms', 'guests', 'upgrades', 'recipes',
                   'total_income_multiplier', 'auto_clean_enabled',
                   'game_speed', 'last_update', 'tavern_unlocked',
-                  'item_inventory', 'ingredient_inventory',
-                  'rooms', 'guests', 'upgrades', 'recipes',
-                  'available_items', 'available_ingredients', 'resources']
+                  'tavern_items', 'inventory', 'available_ingredients']
 
     def get_resources(self, obj):
-        """Get resources in the format expected by frontend"""
+        """Get resources in the format expected by Angular frontend"""
         return {
             'gold': obj.gold,
             'reputation': obj.reputation,
             'max_guests': obj.max_guests
         }
 
-    def get_available_items(self, obj):
+    def get_inventory(self, obj):
+        """Get inventory in the format expected by Angular frontend"""
+        return {
+            'items': obj.item_inventory
+        }
+
+    def get_tavern_items(self, obj):
         """Get all available tavern items"""
         items = TavernItem.objects.all()
         return TavernItemSerializer(items, many=True).data
