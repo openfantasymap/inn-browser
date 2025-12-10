@@ -8,7 +8,7 @@ import { InnState, RoomType } from '../models/game.models';
   providedIn: 'root'
 })
 export class GameService {
-  private apiUrl = 'http://localhost:8000/api/game';
+  private apiUrl = 'http://localhost:8001/api';  // Django backend on port 8001
   private playerId = 'player_1'; // In a real app, this would come from auth
   private gameStateSubject = new BehaviorSubject<InnState | null>(null);
   public gameState$ = this.gameStateSubject.asObservable();
@@ -19,13 +19,13 @@ export class GameService {
   constructor(private http: HttpClient) {}
 
   getGameState(): Observable<InnState> {
-    return this.http.get<InnState>(`${this.apiUrl}/state/${this.playerId}`).pipe(
+    return this.http.get<InnState>(`${this.apiUrl}/game/${this.playerId}`).pipe(
       tap(state => this.gameStateSubject.next(state))
     );
   }
 
   startNewGame(): Observable<InnState> {
-    return this.http.post<InnState>(`${this.apiUrl}/new/${this.playerId}`, {}).pipe(
+    return this.http.post<InnState>(`${this.apiUrl}/game/${this.playerId}`, {}).pipe(
       tap(state => this.gameStateSubject.next(state))
     );
   }
@@ -49,13 +49,9 @@ export class GameService {
   }
 
   assignGuestToRoom(guestId: string, roomId: string): Observable<InnState> {
-    return this.http.post<InnState>(
-      `${this.apiUrl}/assign-guest/${this.playerId}`,
-      null,
-      { params: { guest_id: guestId, room_id: roomId } }
-    ).pipe(
-      tap(state => this.gameStateSubject.next(state))
-    );
+    // Django backend auto-assigns guests, so this just returns current state
+    // Keep the method for compatibility but don't actually call backend
+    return this.getGameState();
   }
 
   cleanRoom(roomId: string): Observable<InnState> {
@@ -78,9 +74,8 @@ export class GameService {
 
   buildRoom(roomType: RoomType): Observable<InnState> {
     return this.http.post<InnState>(
-      `${this.apiUrl}/build-room/${this.playerId}`,
-      null,
-      { params: { room_type: roomType } }
+      `${this.apiUrl}/add-room/${this.playerId}`,
+      { room_type: roomType }
     ).pipe(
       tap(state => this.gameStateSubject.next(state))
     );
