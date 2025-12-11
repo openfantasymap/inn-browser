@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.db import transaction
 from .models import (
     GameState, Room, Guest, TavernItem, Ingredient,
-    Recipe, Upgrade, GuestType
+    Recipe, Upgrade, GuestType, RoomTypeTemplate, UpgradeTemplate
 )
 
 
@@ -44,17 +44,17 @@ class GameService:
         )
 
         if created:
-            # Create initial rooms
+            # Create initial rooms using basic template
+            basic_template = RoomTypeTemplate.objects.get(room_type_id='basic')
             for _ in range(3):
                 Room.objects.create(
                     game_state=game_state,
-                    room_type='basic',
+                    room_template=basic_template,
                     level=1,
-                    income_rate=1.0,
                     cleanliness=100.0
                 )
 
-            # Create initial upgrades
+            # Create initial upgrade instances for all templates
             GameService._create_initial_upgrades(game_state)
 
             # Create recipes for all items
@@ -64,68 +64,13 @@ class GameService:
 
     @staticmethod
     def _create_initial_upgrades(game_state: GameState):
-        """Create initial upgrades for a new game"""
-        upgrades_data = [
-            {
-                'upgrade_id': 'upgrade_income_1',
-                'name': 'Better Beds',
-                'description': 'Increase income from all rooms by 50%',
-                'cost': 200.0,
-                'effect_type': 'income_multiplier',
-                'effect_value': 1.5
-            },
-            {
-                'upgrade_id': 'upgrade_auto_clean',
-                'name': 'Hire Cleaning Staff',
-                'description': 'Automatically clean rooms over time',
-                'cost': 300.0,
-                'effect_type': 'auto_clean',
-                'effect_value': 1.0
-            },
-            {
-                'upgrade_id': 'upgrade_capacity_1',
-                'name': 'Expand Inn',
-                'description': 'Increase max guest capacity by 5',
-                'cost': 400.0,
-                'effect_type': 'guest_capacity',
-                'effect_value': 5.0
-            },
-            {
-                'upgrade_id': 'upgrade_room_standard',
-                'name': 'Standard Room',
-                'description': 'Unlock Standard room type (2x income)',
-                'cost': 500.0,
-                'effect_type': 'unlock_room',
-                'effect_value': 2.0
-            },
-            {
-                'upgrade_id': 'upgrade_income_2',
-                'name': 'Luxury Furnishings',
-                'description': 'Increase income from all rooms by 100%',
-                'cost': 1000.0,
-                'effect_type': 'income_multiplier',
-                'effect_value': 2.0
-            },
-            {
-                'upgrade_id': 'upgrade_room_deluxe',
-                'name': 'Deluxe Room',
-                'description': 'Unlock Deluxe room type (4x income)',
-                'cost': 2000.0,
-                'effect_type': 'unlock_room',
-                'effect_value': 4.0
-            },
-            {
-                'upgrade_id': 'upgrade_tavern',
-                'name': 'Build Tavern',
-                'description': 'Unlock the tavern to serve food and drinks to guests',
-                'cost': 150.0,
-                'effect_type': 'unlock_tavern',
-                'effect_value': 1.0
-            },
-        ]
-
-        for upgrade_data in upgrades_data:
-            Upgrade.objects.create(game_state=game_state, **upgrade_data)
+        """Create upgrade instances for all available templates"""
+        for template in UpgradeTemplate.objects.all():
+            Upgrade.objects.create(
+                game_state=game_state,
+                upgrade_template=template,
+                purchased=False
+            )
 
     @staticmethod
     def _create_recipes_for_items(game_state: GameState):
@@ -366,15 +311,13 @@ class GameService:
         """Add a new room to the inn"""
         game_state = GameService.create_or_get_game_state(player_id)
 
-        # Calculate cost based on room type
-        room_costs = {
-            'basic': 50.0,
-            'standard': 200.0,
-            'deluxe': 500.0,
-            'royal': 1000.0
-        }
+        # Get room template
+        try:
+            room_template = RoomTypeTemplate.objects.get(room_type_id=room_type)
+        except RoomTypeTemplate.DoesNotExist:
+            raise ValueError(f"Room type {room_type} not found")
 
-        cost = room_costs.get(room_type, 50.0)
+        cost = room_template.base_cost
 
         if game_state.gold < cost:
             raise ValueError(f"Not enough gold. Need {cost}, have {game_state.gold}")
@@ -383,12 +326,10 @@ class GameService:
         game_state.gold -= cost
 
         # Create room
-        income_rates = {'basic': 1.0, 'standard': 2.0, 'deluxe': 4.0, 'royal': 8.0}
         Room.objects.create(
             game_state=game_state,
-            room_type=room_type,
+            room_template=room_template,
             level=1,
-            income_rate=income_rates.get(room_type, 1.0),
             cleanliness=100.0
         )
 
@@ -417,7 +358,10 @@ class GameService:
         game_state = GameService.create_or_get_game_state(player_id)
 
         try:
-            upgrade = game_state.upgrades.get(upgrade_id=upgrade_id, purchased=False)
+            upgrade = game_state.upgrades.get(
+                upgrade_template__upgrade_id=upgrade_id,
+                purchased=False
+            )
         except Upgrade.DoesNotExist:
             raise ValueError(f"Upgrade {upgrade_id} not found or already purchased")
 
