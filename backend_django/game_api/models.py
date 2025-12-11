@@ -48,6 +48,65 @@ class IngredientRarity(models.TextChoices):
     LEGENDARY = 'legendary', 'Legendary'
 
 
+# ============================================================================
+# TEMPLATE MODELS - Shared across all players
+# ============================================================================
+
+class RoomTypeTemplate(models.Model):
+    """Template defining room type attributes"""
+    room_type_id = models.CharField(max_length=50, unique=True, primary_key=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(default="")
+
+    # Costs and attributes
+    base_cost = models.FloatField(default=50.0)
+    income_multiplier = models.FloatField(default=1.0)
+
+    # Display
+    emoji = models.CharField(max_length=10, default="🏠")
+
+    class Meta:
+        verbose_name = "Room Type Template"
+        verbose_name_plural = "Room Type Templates"
+        ordering = ['base_cost']
+
+    def __str__(self):
+        return f"{self.emoji} {self.name} (×{self.income_multiplier})"
+
+
+class UpgradeTemplate(models.Model):
+    """Template defining upgrade attributes"""
+    upgrade_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+
+    # Cost and effects
+    cost = models.FloatField(default=0.0)
+    effect_type = models.CharField(max_length=50)
+    effect_value = models.FloatField(default=0.0)
+
+    # Requirements (optional)
+    required_upgrade = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='unlocks'
+    )
+
+    class Meta:
+        verbose_name = "Upgrade Template"
+        verbose_name_plural = "Upgrade Templates"
+        ordering = ['cost']
+
+    def __str__(self):
+        return f"{self.name} (${self.cost:.0f})"
+
+
+# ============================================================================
+# GAME STATE AND PLAYER-SPECIFIC MODELS
+# ============================================================================
+
 class GameState(models.Model):
     """Main game state for a player"""
     player_id = models.CharField(max_length=100, unique=True, db_index=True)
@@ -79,21 +138,32 @@ class GameState(models.Model):
 
 
 class Room(models.Model):
-    """Inn rooms"""
+    """Inn rooms - player-specific instances"""
     game_state = models.ForeignKey(GameState, on_delete=models.CASCADE, related_name='rooms')
-    room_type = models.CharField(max_length=20, choices=RoomType.choices, default=RoomType.BASIC)
+    room_template = models.ForeignKey(RoomTypeTemplate, on_delete=models.PROTECT, related_name='instances')
+
+    # Player-specific attributes
     level = models.IntegerField(default=1)
     occupied = models.BooleanField(default=False)
-    income_rate = models.FloatField(default=1.0)
     cleanliness = models.FloatField(default=100.0)
 
     class Meta:
         verbose_name = "Room"
         verbose_name_plural = "Rooms"
 
+    @property
+    def income_rate(self):
+        """Calculate income rate based on template and level"""
+        return self.room_template.income_multiplier * self.level
+
+    @property
+    def room_type(self):
+        """Get room type from template for backward compatibility"""
+        return self.room_template.room_type_id
+
     def __str__(self):
         status = "Occupied" if self.occupied else "Empty"
-        return f"{self.get_room_type_display()} Room Lv.{self.level} ({status})"
+        return f"{self.room_template.name} Lv.{self.level} ({status})"
 
 
 class Guest(models.Model):
@@ -201,22 +271,42 @@ class Recipe(models.Model):
 
 
 class Upgrade(models.Model):
-    """Purchasable upgrades"""
+    """Purchasable upgrades - player-specific instances"""
     game_state = models.ForeignKey(GameState, on_delete=models.CASCADE, related_name='upgrades')
-    upgrade_id = models.CharField(max_length=100, db_index=True)
-    name = models.CharField(max_length=200)
-    description = models.TextField()
+    upgrade_template = models.ForeignKey(UpgradeTemplate, on_delete=models.PROTECT, related_name='instances')
 
-    cost = models.FloatField(default=0.0)
+    # Player-specific state
     purchased = models.BooleanField(default=False)
-
-    effect_type = models.CharField(max_length=50)
-    effect_value = models.FloatField(default=0.0)
 
     class Meta:
         verbose_name = "Upgrade"
         verbose_name_plural = "Upgrades"
-        unique_together = [['game_state', 'upgrade_id']]
+        unique_together = [['game_state', 'upgrade_template']]
+
+    # Properties for backward compatibility
+    @property
+    def upgrade_id(self):
+        return self.upgrade_template.upgrade_id
+
+    @property
+    def name(self):
+        return self.upgrade_template.name
+
+    @property
+    def description(self):
+        return self.upgrade_template.description
+
+    @property
+    def cost(self):
+        return self.upgrade_template.cost
+
+    @property
+    def effect_type(self):
+        return self.upgrade_template.effect_type
+
+    @property
+    def effect_value(self):
+        return self.upgrade_template.effect_value
 
     def __str__(self):
         status = "✓" if self.purchased else "✗"

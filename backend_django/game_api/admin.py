@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import GameState, Room, Guest, TavernItem, Ingredient, Recipe, Upgrade
+from .models import (
+    GameState, Room, Guest, TavernItem, Ingredient, Recipe, Upgrade,
+    RoomTypeTemplate, UpgradeTemplate
+)
 
 
 @admin.register(GameState)
@@ -47,10 +50,14 @@ class GameStateAdmin(admin.ModelAdmin):
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ['id', 'game_state', 'room_type', 'level', 'occupied_display',
+    list_display = ['id', 'game_state', 'room_template', 'level', 'occupied_display',
                     'income_rate', 'cleanliness_display']
-    list_filter = ['room_type', 'occupied', 'game_state']
+    list_filter = ['room_template', 'occupied', 'game_state']
     search_fields = ['game_state__player_id']
+
+    def room_type(self, obj):
+        return obj.room_type
+    room_type.short_description = 'Type'
 
     def occupied_display(self, obj):
         if obj.occupied:
@@ -188,9 +195,25 @@ class RecipeAdmin(admin.ModelAdmin):
 @admin.register(Upgrade)
 class UpgradeAdmin(admin.ModelAdmin):
     list_display = ['upgrade_id', 'name', 'game_state', 'purchased_display',
-                    'cost', 'effect_type']
-    list_filter = ['purchased', 'effect_type', 'game_state']
-    search_fields = ['name', 'upgrade_id', 'description']
+                    'cost', 'effect_type_display']
+    list_filter = ['purchased', 'upgrade_template', 'game_state']
+    search_fields = ['upgrade_template__name', 'upgrade_template__upgrade_id']
+
+    def upgrade_id(self, obj):
+        return obj.upgrade_id
+    upgrade_id.short_description = 'ID'
+
+    def name(self, obj):
+        return obj.name
+    name.short_description = 'Name'
+
+    def cost(self, obj):
+        return obj.cost
+    cost.short_description = 'Cost'
+
+    def effect_type_display(self, obj):
+        return obj.effect_type
+    effect_type_display.short_description = 'Effect Type'
 
     def purchased_display(self, obj):
         if obj.purchased:
@@ -198,6 +221,72 @@ class UpgradeAdmin(admin.ModelAdmin):
         return format_html('<span style="color: gray;">Not Purchased</span>')
     purchased_display.short_description = 'Status'
 
+
+# ============================================================================
+# TEMPLATE ADMIN - Global templates shared across all players
+# ============================================================================
+
+@admin.register(RoomTypeTemplate)
+class RoomTypeTemplateAdmin(admin.ModelAdmin):
+    list_display = ['room_type_id', 'emoji_display', 'name', 'base_cost',
+                    'income_multiplier', 'instance_count']
+    search_fields = ['name', 'room_type_id']
+    ordering = ['base_cost']
+
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('room_type_id', 'name', 'emoji', 'description')
+        }),
+        ('Attributes', {
+            'fields': ('base_cost', 'income_multiplier')
+        }),
+    )
+
+    def emoji_display(self, obj):
+        return format_html('<span style="font-size: 1.5em;">{}</span>', obj.emoji)
+    emoji_display.short_description = ''
+
+    def instance_count(self, obj):
+        count = obj.instances.count()
+        return format_html('<strong>{}</strong> rooms', count)
+    instance_count.short_description = 'In Use'
+
+
+@admin.register(UpgradeTemplate)
+class UpgradeTemplateAdmin(admin.ModelAdmin):
+    list_display = ['upgrade_id', 'name', 'cost', 'effect_display', 'instance_count']
+    list_filter = ['effect_type']
+    search_fields = ['name', 'upgrade_id', 'description']
+    ordering = ['cost']
+
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('upgrade_id', 'name', 'description')
+        }),
+        ('Cost & Effects', {
+            'fields': ('cost', 'effect_type', 'effect_value')
+        }),
+        ('Requirements', {
+            'fields': ('required_upgrade',),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def effect_display(self, obj):
+        return format_html('<code>{}:</code> <strong>{}</strong>',
+                          obj.effect_type, obj.effect_value)
+    effect_display.short_description = 'Effect'
+
+    def instance_count(self, obj):
+        total = obj.instances.count()
+        purchased = obj.instances.filter(purchased=True).count()
+        return format_html('{} / <strong>{}</strong> purchased', purchased, total)
+    instance_count.short_description = 'Usage'
+
+
+# ============================================================================
+# ADMIN SITE CUSTOMIZATION
+# ============================================================================
 
 # Customize admin site
 admin.site.site_header = "🏰 Fantasy Inn Tycoon Admin"
