@@ -126,3 +126,31 @@ def serve_guest(request, player_id):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def experiment_with_ingredients(request, player_id):
+    """Experiment with ingredient combinations to discover recipes"""
+    try:
+        ingredient_ids = request.data.get('ingredient_ids', [])
+
+        if not isinstance(ingredient_ids, list):
+            return Response({'error': 'ingredient_ids must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+
+        result = GameService.experiment_with_ingredients(player_id, ingredient_ids)
+
+        # Serialize game state
+        game_state = result.pop('game_state')
+        serializer = GameStateSerializer(game_state)
+
+        # Return result with serialized game state
+        response_data = {
+            **result,
+            'game_state': serializer.data
+        }
+
+        return Response(response_data)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

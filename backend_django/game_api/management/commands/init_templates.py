@@ -15,16 +15,21 @@ class Command(BaseCommand):
         RoomTypeTemplate.objects.all().delete()
         UpgradeTemplate.objects.all().delete()
 
-        # Create room type templates
-        self._create_room_templates()
-
-        # Create upgrade templates
+        # Create upgrade templates FIRST (needed for room requirements)
         self._create_upgrade_templates()
+
+        # Create room type templates (referencing upgrades)
+        self._create_room_templates()
 
         self.stdout.write(self.style.SUCCESS('Templates initialized successfully!'))
 
     def _create_room_templates(self):
         """Create all room type templates"""
+        # Get upgrade references
+        upgrade_standard = UpgradeTemplate.objects.get(upgrade_id='upgrade_room_standard')
+        upgrade_deluxe = UpgradeTemplate.objects.get(upgrade_id='upgrade_room_deluxe')
+        upgrade_royal = UpgradeTemplate.objects.get(upgrade_id='upgrade_room_royal')
+
         room_templates = [
             {
                 'room_type_id': 'basic',
@@ -32,7 +37,8 @@ class Command(BaseCommand):
                 'description': 'Simple room with basic amenities',
                 'base_cost': 50.0,
                 'income_multiplier': 1.0,
-                'emoji': '🛏️'
+                'emoji': '🛏️',
+                'required_upgrade': None  # Always available
             },
             {
                 'room_type_id': 'standard',
@@ -40,7 +46,8 @@ class Command(BaseCommand):
                 'description': 'Comfortable room with better furnishings',
                 'base_cost': 200.0,
                 'income_multiplier': 2.0,
-                'emoji': '🏠'
+                'emoji': '🏠',
+                'required_upgrade': upgrade_standard
             },
             {
                 'room_type_id': 'deluxe',
@@ -48,7 +55,8 @@ class Command(BaseCommand):
                 'description': 'Luxurious room with premium amenities',
                 'base_cost': 500.0,
                 'income_multiplier': 4.0,
-                'emoji': '🏰'
+                'emoji': '🏰',
+                'required_upgrade': upgrade_deluxe
             },
             {
                 'room_type_id': 'royal',
@@ -56,13 +64,15 @@ class Command(BaseCommand):
                 'description': 'Opulent suite fit for royalty',
                 'base_cost': 1000.0,
                 'income_multiplier': 8.0,
-                'emoji': '👑'
+                'emoji': '👑',
+                'required_upgrade': upgrade_royal
             },
         ]
 
         for room_data in room_templates:
-            RoomTypeTemplate.objects.create(**room_data)
-            self.stdout.write(f'  Created: {room_data["emoji"]} {room_data["name"]}')
+            room = RoomTypeTemplate.objects.create(**room_data)
+            req = f' (requires {room_data["required_upgrade"].name})' if room_data["required_upgrade"] else ' (always available)'
+            self.stdout.write(f'  Created: {room_data["emoji"]} {room_data["name"]}{req}')
 
     def _create_upgrade_templates(self):
         """Create all upgrade templates"""

@@ -22,4 +22,5 @@ urlpatterns = [
     path('unlock-recipe/<str:player_id>/<str:recipe_id>', views.unlock_recipe, name='unlock_recipe'),
     path('craft-item/<str:player_id>', views.craft_item, name='craft_item'),
     path('serve-guest/<str:player_id>', views.serve_guest, name='serve_guest'),
+    path('experiment/<str:player_id>', views.experiment_with_ingredients, name='experiment_ingredients'),
 ]

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import GameState, Room, Guest, TavernItem, Ingredient, Recipe, Upgrade
+from .models import GameState, Room, Guest, TavernItem, Ingredient, PlayerRecipe, Upgrade
 
 
 class RoomSerializer(serializers.ModelSerializer):
@@ -49,15 +49,16 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'rarity', 'description', 'base_drop_chance']
 
 
-class RecipeSerializer(serializers.ModelSerializer):
-    """Serializer for Recipe model"""
+class PlayerRecipeSerializer(serializers.ModelSerializer):
+    """Serializer for PlayerRecipe model"""
     id = serializers.CharField(source='recipe_id', read_only=True)
     item_id = serializers.CharField(source='item.item_id', read_only=True)
 
     class Meta:
-        model = Recipe
+        model = PlayerRecipe
         fields = ['id', 'name', 'item_id', 'unlocked', 'discovered',
-                  'cost_to_unlock', 'ingredients_cost', 'required_ingredients']
+                  'cost_to_unlock', 'ingredients_cost', 'required_ingredients',
+                  'times_crafted', 'discovered_at', 'unlocked_at']
 
 
 class UpgradeSerializer(serializers.ModelSerializer):
@@ -75,7 +76,7 @@ class GameStateSerializer(serializers.ModelSerializer):
     rooms = RoomSerializer(many=True, read_only=True)
     guests = GuestSerializer(many=True, read_only=True)
     upgrades = UpgradeSerializer(many=True, read_only=True)
-    recipes = RecipeSerializer(many=True, read_only=True)
+    recipes = serializers.SerializerMethodField()  # Changed to use player_recipes
 
     # Angular expects these field names
     tavern_items = serializers.SerializerMethodField()
@@ -113,6 +114,11 @@ class GameStateSerializer(serializers.ModelSerializer):
         """Get all available ingredients"""
         ingredients = Ingredient.objects.all()
         return IngredientSerializer(ingredients, many=True).data
+
+    def get_recipes(self, obj):
+        """Get player's recipes (discovered and unlocked)"""
+        player_recipes = obj.player_recipes.all()
+        return PlayerRecipeSerializer(player_recipes, many=True).data
 
 
 class GameStateListSerializer(serializers.ModelSerializer):

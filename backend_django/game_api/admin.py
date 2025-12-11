@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
-    GameState, Room, Guest, TavernItem, Ingredient, Recipe, Upgrade,
-    RoomTypeTemplate, UpgradeTemplate
+    GameState, Room, Guest, TavernItem, Ingredient, PlayerRecipe, Upgrade,
+    RoomTypeTemplate, UpgradeTemplate, RecipeTemplate
 )
 
 
@@ -174,22 +174,33 @@ class IngredientAdmin(admin.ModelAdmin):
     base_drop_chance_display.short_description = 'Drop Chance'
 
 
-@admin.register(Recipe)
-class RecipeAdmin(admin.ModelAdmin):
-    list_display = ['recipe_id', 'name', 'item', 'game_state', 'unlocked_display',
-                    'discovered_display', 'cost_to_unlock']
-    list_filter = ['unlocked', 'discovered', 'game_state']
-    search_fields = ['name', 'recipe_id', 'item__name']
+@admin.register(PlayerRecipe)
+class PlayerRecipeAdmin(admin.ModelAdmin):
+    list_display = ['recipe_id', 'name', 'item_name', 'game_state', 'status_display',
+                    'times_crafted', 'discovered_at']
+    list_filter = ['unlocked', 'discovered', 'recipe_template', 'game_state']
+    search_fields = ['recipe_template__name', 'recipe_template__recipe_id', 'game_state__player_id']
+    readonly_fields = ['discovered_at', 'unlocked_at', 'times_crafted']
 
-    def unlocked_display(self, obj):
+    def recipe_id(self, obj):
+        return obj.recipe_id
+    recipe_id.short_description = 'Recipe ID'
+
+    def name(self, obj):
+        return obj.name
+    name.short_description = 'Name'
+
+    def item_name(self, obj):
+        return obj.item.name
+    item_name.short_description = 'Item'
+
+    def status_display(self, obj):
         if obj.unlocked:
             return format_html('<span style="color: green;">✓ Unlocked</span>')
-        return format_html('<span style="color: red;">✗ Locked</span>')
-    unlocked_display.short_description = 'Status'
-
-    def discovered_display(self, obj):
-        return '🔍' if obj.discovered else '❓'
-    discovered_display.short_description = 'Discovered'
+        elif obj.discovered:
+            return format_html('<span style="color: orange;">🔍 Discovered</span>')
+        return format_html('<span style="color: gray;">❓ Hidden</span>')
+    status_display.short_description = 'Status'
 
 
 @admin.register(Upgrade)
@@ -229,7 +240,8 @@ class UpgradeAdmin(admin.ModelAdmin):
 @admin.register(RoomTypeTemplate)
 class RoomTypeTemplateAdmin(admin.ModelAdmin):
     list_display = ['room_type_id', 'emoji_display', 'name', 'base_cost',
-                    'income_multiplier', 'instance_count']
+                    'income_multiplier', 'required_upgrade_display', 'instance_count']
+    list_filter = ['required_upgrade']
     search_fields = ['name', 'room_type_id']
     ordering = ['base_cost']
 
@@ -240,11 +252,21 @@ class RoomTypeTemplateAdmin(admin.ModelAdmin):
         ('Attributes', {
             'fields': ('base_cost', 'income_multiplier')
         }),
+        ('Requirements', {
+            'fields': ('required_upgrade',),
+            'classes': ('collapse',)
+        }),
     )
 
     def emoji_display(self, obj):
         return format_html('<span style="font-size: 1.5em;">{}</span>', obj.emoji)
     emoji_display.short_description = ''
+
+    def required_upgrade_display(self, obj):
+        if obj.required_upgrade:
+            return format_html('<span style="color: orange;">🔒 {}</span>', obj.required_upgrade.name)
+        return format_html('<span style="color: green;">✓ Always available</span>')
+    required_upgrade_display.short_description = 'Requires'
 
     def instance_count(self, obj):
         count = obj.instances.count()
@@ -282,6 +304,60 @@ class UpgradeTemplateAdmin(admin.ModelAdmin):
         purchased = obj.instances.filter(purchased=True).count()
         return format_html('{} / <strong>{}</strong> purchased', purchased, total)
     instance_count.short_description = 'Usage'
+
+
+@admin.register(RecipeTemplate)
+class RecipeTemplateAdmin(admin.ModelAdmin):
+    list_display = ['recipe_id', 'name', 'item_name', 'ingredient_count',
+                    'discoverable_display', 'auto_unlocked_display', 'instance_count']
+    list_filter = ['discoverable', 'auto_unlocked', 'item__item_type', 'item__quality']
+    search_fields = ['name', 'recipe_id', 'item__name']
+    ordering = ['item__quality', 'name']
+
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('recipe_id', 'name', 'item')
+        }),
+        ('Ingredients', {
+            'fields': ('required_ingredients',),
+            'description': 'Format: [{"ingredient_id": "ing_flour", "quantity": 2}, ...]'
+        }),
+        ('Costs', {
+            'fields': ('cost_to_unlock', 'ingredients_cost')
+        }),
+        ('Discovery Settings', {
+            'fields': ('discoverable', 'auto_unlocked')
+        }),
+    )
+
+    def item_name(self, obj):
+        return obj.item.name
+    item_name.short_description = 'Creates Item'
+
+    def ingredient_count(self, obj):
+        count = len(obj.required_ingredients)
+        return format_html('<strong>{}</strong> ingredients', count)
+    ingredient_count.short_description = 'Ingredients'
+
+    def discoverable_display(self, obj):
+        if obj.discoverable:
+            return format_html('<span style="color: green;">✓ Can discover</span>')
+        return format_html('<span style="color: gray;">Manual only</span>')
+    discoverable_display.short_description = 'Discoverable'
+
+    def auto_unlocked_display(self, obj):
+        return '⭐' if obj.auto_unlocked else '🔒'
+    auto_unlocked_display.short_description = 'Auto'
+
+    def instance_count(self, obj):
+        total = obj.player_instances.count()
+        discovered = obj.player_instances.filter(discovered=True).count()
+        unlocked = obj.player_instances.filter(unlocked=True).count()
+        return format_html(
+            '<strong>{}</strong> unlocked / {} discovered / {} total',
+            unlocked, discovered, total
+        )
+    instance_count.short_description = 'Player Stats'
 
 
 # ============================================================================

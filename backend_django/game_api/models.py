@@ -65,6 +65,15 @@ class RoomTypeTemplate(models.Model):
     # Display
     emoji = models.CharField(max_length=10, default="🏠")
 
+    # Requirements (optional) - which upgrade is needed to unlock this room type
+    required_upgrade = models.ForeignKey(
+        'UpgradeTemplate',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='unlocks_room_types'
+    )
+
     class Meta:
         verbose_name = "Room Type Template"
         verbose_name_plural = "Room Type Templates"
@@ -101,6 +110,33 @@ class UpgradeTemplate(models.Model):
 
     def __str__(self):
         return f"{self.name} (${self.cost:.0f})"
+
+
+class RecipeTemplate(models.Model):
+    """Template defining recipe attributes - shared across all players"""
+    recipe_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    name = models.CharField(max_length=200)
+    item = models.ForeignKey('TavernItem', on_delete=models.CASCADE, related_name='recipe_templates')
+
+    # Required ingredients (stored as JSON)
+    # Format: [{"ingredient_id": "flour", "quantity": 2}, ...]
+    required_ingredients = models.JSONField(default=list)
+
+    # Costs
+    cost_to_unlock = models.FloatField(default=0.0)
+    ingredients_cost = models.FloatField(default=0.0)
+
+    # Discovery settings
+    discoverable = models.BooleanField(default=True)  # Can be discovered through experimentation
+    auto_unlocked = models.BooleanField(default=False)  # Automatically unlocked for new players
+
+    class Meta:
+        verbose_name = "Recipe Template"
+        verbose_name_plural = "Recipe Templates"
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} → {self.item.name}"
 
 
 # ============================================================================
@@ -242,32 +278,61 @@ class Ingredient(models.Model):
         return f"{self.name} ({self.get_rarity_display()})"
 
 
-class Recipe(models.Model):
-    """Crafting recipes"""
-    game_state = models.ForeignKey(GameState, on_delete=models.CASCADE, related_name='recipes')
-    recipe_id = models.CharField(max_length=100, db_index=True)
-    name = models.CharField(max_length=200)
-    item = models.ForeignKey(TavernItem, on_delete=models.CASCADE, related_name='recipes')
+class PlayerRecipe(models.Model):
+    """Player-specific recipe discovery tracking"""
+    game_state = models.ForeignKey(GameState, on_delete=models.CASCADE, related_name='player_recipes')
+    recipe_template = models.ForeignKey(RecipeTemplate, on_delete=models.PROTECT, related_name='player_instances')
 
-    # Status
-    unlocked = models.BooleanField(default=False)
+    # Discovery status
     discovered = models.BooleanField(default=False)
+    discovered_at = models.DateTimeField(null=True, blank=True)
 
-    # Costs
-    cost_to_unlock = models.FloatField(default=0.0)
-    ingredients_cost = models.FloatField(default=0.0)
+    # Unlock status (some recipes might need to be unlocked with gold after discovery)
+    unlocked = models.BooleanField(default=False)
+    unlocked_at = models.DateTimeField(null=True, blank=True)
 
-    # Required ingredients (stored as JSON)
-    required_ingredients = models.JSONField(default=list)  # [{ingredient_id: str, quantity: int}]
+    # Stats
+    times_crafted = models.IntegerField(default=0)
 
     class Meta:
-        verbose_name = "Recipe"
-        verbose_name_plural = "Recipes"
-        unique_together = [['game_state', 'recipe_id']]
+        verbose_name = "Player Recipe"
+        verbose_name_plural = "Player Recipes"
+        unique_together = [['game_state', 'recipe_template']]
+        ordering = ['-discovered_at']
+
+    # Properties for backward compatibility
+    @property
+    def recipe_id(self):
+        return self.recipe_template.recipe_id
+
+    @property
+    def name(self):
+        return self.recipe_template.name
+
+    @property
+    def item(self):
+        return self.recipe_template.item
+
+    @property
+    def required_ingredients(self):
+        return self.recipe_template.required_ingredients
+
+    @property
+    def cost_to_unlock(self):
+        return self.recipe_template.cost_to_unlock
+
+    @property
+    def ingredients_cost(self):
+        return self.recipe_template.ingredients_cost
 
     def __str__(self):
-        status = "Unlocked" if self.unlocked else "Locked"
-        return f"{self.name} ({status})"
+        if self.unlocked:
+            status = "✓ Unlocked"
+        elif self.discovered:
+            status = "? Discovered"
+        else:
+            status = "✗ Hidden"
+        return f"{status} {self.name}"
 
 
 class Upgrade(models.Model):

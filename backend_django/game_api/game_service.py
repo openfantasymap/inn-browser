@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.db import transaction
 from .models import (
     GameState, Room, Guest, TavernItem, Ingredient,
-    Recipe, Upgrade, GuestType, RoomTypeTemplate, UpgradeTemplate
+    PlayerRecipe, Upgrade, GuestType, RoomTypeTemplate, UpgradeTemplate, RecipeTemplate
 )
 
 
@@ -74,31 +74,19 @@ class GameService:
 
     @staticmethod
     def _create_recipes_for_items(game_state: GameState):
-        """Create recipes for all tavern items"""
-        items = TavernItem.objects.all()
+        """Create player recipe instances for all recipe templates"""
+        for recipe_template in RecipeTemplate.objects.all():
+            # Auto-unlock basic recipes
+            should_unlock = recipe_template.auto_unlocked
 
-        for item in items:
-            unlocked = item.quality == 'basic'  # Basic items start unlocked
-            cost_to_unlock = 0.0
-
-            if item.quality == 'good':
-                cost_to_unlock = 50.0
-            elif item.quality == 'fine':
-                cost_to_unlock = 150.0
-            elif item.quality == 'exquisite':
-                cost_to_unlock = 500.0
-            elif item.quality == 'legendary':
-                cost_to_unlock = 1000.0
-
-            Recipe.objects.create(
+            PlayerRecipe.objects.create(
                 game_state=game_state,
-                recipe_id=f"recipe_{item.item_id}",
-                name=f"Recipe: {item.name}",
-                item=item,
-                unlocked=unlocked,
-                discovered=unlocked,
-                cost_to_unlock=cost_to_unlock,
-                required_ingredients=[]  # Can be extended later
+                recipe_template=recipe_template,
+                discovered=should_unlock,
+                unlocked=should_unlock,
+                discovered_at=timezone.now() if should_unlock else None,
+                unlocked_at=timezone.now() if should_unlock else None,
+                times_crafted=0
             )
 
     @staticmethod
@@ -317,6 +305,18 @@ class GameService:
         except RoomTypeTemplate.DoesNotExist:
             raise ValueError(f"Room type {room_type} not found")
 
+        # Check if required upgrade is purchased
+        if room_template.required_upgrade:
+            try:
+                upgrade = game_state.upgrades.get(
+                    upgrade_template=room_template.required_upgrade,
+                    purchased=True
+                )
+            except Upgrade.DoesNotExist:
+                raise ValueError(
+                    f"Room type {room_type} requires upgrade: {room_template.required_upgrade.name}"
+                )
+
         cost = room_template.base_cost
 
         if game_state.gold < cost:
@@ -391,24 +391,28 @@ class GameService:
     @staticmethod
     @transaction.atomic
     def unlock_recipe(player_id: str, recipe_id: str) -> GameState:
-        """Unlock a recipe"""
+        """Unlock a recipe (after discovering it)"""
         game_state = GameService.create_or_get_game_state(player_id)
 
         try:
-            recipe = game_state.recipes.get(recipe_id=recipe_id, unlocked=False)
-        except Recipe.DoesNotExist:
-            raise ValueError(f"Recipe {recipe_id} not found or already unlocked")
+            player_recipe = game_state.player_recipes.get(
+                recipe_template__recipe_id=recipe_id,
+                discovered=True,
+                unlocked=False
+            )
+        except PlayerRecipe.DoesNotExist:
+            raise ValueError(f"Recipe {recipe_id} not discovered or already unlocked")
 
-        if game_state.gold < recipe.cost_to_unlock:
-            raise ValueError(f"Not enough gold. Need {recipe.cost_to_unlock}, have {game_state.gold}")
+        if game_state.gold < player_recipe.cost_to_unlock:
+            raise ValueError(f"Not enough gold. Need {player_recipe.cost_to_unlock}, have {game_state.gold}")
 
         # Deduct cost
-        game_state.gold -= recipe.cost_to_unlock
+        game_state.gold -= player_recipe.cost_to_unlock
 
         # Unlock recipe
-        recipe.unlocked = True
-        recipe.discovered = True
-        recipe.save()
+        player_recipe.unlocked = True
+        player_recipe.unlocked_at = timezone.now()
+        player_recipe.save()
 
         game_state.save()
         return game_state
@@ -416,7 +420,7 @@ class GameService:
     @staticmethod
     @transaction.atomic
     def craft_item(player_id: str, item_id: str, quantity: int = 1) -> GameState:
-        """Craft tavern items"""
+        """Craft tavern items using unlocked recipes"""
         game_state = GameService.create_or_get_game_state(player_id)
 
         try:
@@ -426,21 +430,39 @@ class GameService:
 
         # Check if recipe is unlocked
         try:
-            recipe = game_state.recipes.get(item__item_id=item_id, unlocked=True)
-        except Recipe.DoesNotExist:
+            player_recipe = game_state.player_recipes.get(
+                recipe_template__item__item_id=item_id,
+                unlocked=True
+            )
+        except PlayerRecipe.DoesNotExist:
             raise ValueError(f"Recipe for {item.name} is not unlocked")
 
-        total_cost = item.cost * quantity
+        # Check ingredients
+        required_ingredients = player_recipe.required_ingredients
+        for ingredient_req in required_ingredients:
+            ingredient_id = ingredient_req['ingredient_id']
+            needed_quantity = ingredient_req['quantity'] * quantity
+            current_quantity = game_state.ingredient_inventory.get(ingredient_id, 0)
 
-        if game_state.gold < total_cost:
-            raise ValueError(f"Not enough gold. Need {total_cost}, have {game_state.gold}")
+            if current_quantity < needed_quantity:
+                ingredient = Ingredient.objects.get(ingredient_id=ingredient_id)
+                raise ValueError(
+                    f"Not enough {ingredient.name}. Need {needed_quantity}, have {current_quantity}"
+                )
 
-        # Deduct cost
-        game_state.gold -= total_cost
+        # Deduct ingredients
+        for ingredient_req in required_ingredients:
+            ingredient_id = ingredient_req['ingredient_id']
+            needed_quantity = ingredient_req['quantity'] * quantity
+            game_state.ingredient_inventory[ingredient_id] -= needed_quantity
 
         # Add to inventory
         current_amount = game_state.item_inventory.get(item_id, 0)
         game_state.item_inventory[item_id] = current_amount + quantity
+
+        # Update crafting stats
+        player_recipe.times_crafted += quantity
+        player_recipe.save()
 
         game_state.save()
         return game_state
@@ -487,3 +509,124 @@ class GameService:
         game_state.save()
 
         return game_state
+
+    @staticmethod
+    @transaction.atomic
+    def experiment_with_ingredients(player_id: str, ingredient_ids: list) -> dict:
+        """
+        Experiment with ingredient combinations to discover recipes.
+        This is the "combo game" system where players try ingredient combinations.
+
+        Returns:
+            dict with 'success', 'message', 'discovered_recipe' (if any), 'game_state'
+        """
+        game_state = GameService.create_or_get_game_state(player_id)
+
+        # Validate ingredient IDs
+        if not ingredient_ids or len(ingredient_ids) == 0:
+            return {
+                'success': False,
+                'message': 'No ingredients provided',
+                'game_state': game_state
+            }
+
+        # Check player has all ingredients
+        ingredient_counts = {}
+        for ing_id in ingredient_ids:
+            ingredient_counts[ing_id] = ingredient_counts.get(ing_id, 0) + 1
+
+        for ing_id, needed_count in ingredient_counts.items():
+            current_count = game_state.ingredient_inventory.get(ing_id, 0)
+            if current_count < needed_count:
+                try:
+                    ingredient = Ingredient.objects.get(ingredient_id=ing_id)
+                    return {
+                        'success': False,
+                        'message': f'Not enough {ingredient.name}. Need {needed_count}, have {current_count}',
+                        'game_state': game_state
+                    }
+                except Ingredient.DoesNotExist:
+                    return {
+                        'success': False,
+                        'message': f'Invalid ingredient: {ing_id}',
+                        'game_state': game_state
+                    }
+
+        # Search for matching recipe templates
+        matching_recipe = None
+        for recipe_template in RecipeTemplate.objects.filter(discoverable=True):
+            # Check if this recipe matches the ingredients
+            required_ingredients = recipe_template.required_ingredients
+
+            # Build required ingredient counts
+            required_counts = {}
+            for req in required_ingredients:
+                ing_id = req['ingredient_id']
+                quantity = req['quantity']
+                required_counts[ing_id] = required_counts.get(ing_id, 0) + quantity
+
+            # Check if ingredients match exactly
+            if required_counts == ingredient_counts:
+                matching_recipe = recipe_template
+                break
+
+        if not matching_recipe:
+            # Failed experiment - ingredients are consumed
+            for ing_id, count in ingredient_counts.items():
+                game_state.ingredient_inventory[ing_id] -= count
+            game_state.save()
+
+            return {
+                'success': False,
+                'message': 'Experiment failed! The ingredients didn\'t create anything useful.',
+                'consumed_ingredients': True,
+                'game_state': game_state
+            }
+
+        # Check if recipe is already discovered
+        try:
+            player_recipe = game_state.player_recipes.get(recipe_template=matching_recipe)
+
+            if player_recipe.discovered:
+                return {
+                    'success': False,
+                    'message': f'You already know the recipe for {matching_recipe.name}!',
+                    'game_state': game_state
+                }
+
+            # SUCCESS! Discover the recipe
+            # Consume the ingredients used in experiment
+            for ing_id, count in ingredient_counts.items():
+                game_state.ingredient_inventory[ing_id] -= count
+
+            player_recipe.discovered = True
+            player_recipe.discovered_at = timezone.now()
+
+            # If it's a free recipe, unlock it immediately
+            if player_recipe.cost_to_unlock <= 0:
+                player_recipe.unlocked = True
+                player_recipe.unlocked_at = timezone.now()
+
+            player_recipe.save()
+            game_state.save()
+
+            return {
+                'success': True,
+                'message': f'Discovery! You learned the recipe for {matching_recipe.item.name}!',
+                'discovered_recipe': {
+                    'recipe_id': matching_recipe.recipe_id,
+                    'name': matching_recipe.name,
+                    'item_name': matching_recipe.item.name,
+                    'unlocked': player_recipe.unlocked,
+                    'cost_to_unlock': matching_recipe.cost_to_unlock
+                },
+                'game_state': game_state
+            }
+
+        except PlayerRecipe.DoesNotExist:
+            # Recipe instance doesn't exist - shouldn't happen, but handle gracefully
+            return {
+                'success': False,
+                'message': 'Error: Recipe data not initialized properly',
+                'game_state': game_state
+            }
