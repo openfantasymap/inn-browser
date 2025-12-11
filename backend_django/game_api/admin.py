@@ -28,12 +28,12 @@ class GameStateAdmin(admin.ModelAdmin):
     )
 
     def gold_display(self, obj):
-        return format_html('<strong>💰 {:.0f}</strong>', obj.gold)
+        return format_html(f'<strong>💰 {obj.gold}</strong>')
     gold_display.short_description = 'Gold'
 
     def reputation_display(self, obj):
         color = 'green' if obj.reputation > 0 else 'red'
-        return format_html('<span style="color: {};">⭐ {:.1f}</span>', color, obj.reputation)
+        return format_html(f'<span style="color: {color};">⭐ {obj.reputation}</span>')
     reputation_display.short_description = 'Reputation'
 
     def room_count(self, obj):
@@ -102,14 +102,14 @@ class GuestAdmin(admin.ModelAdmin):
             color = 'orange'
         else:
             color = 'red'
-        return format_html('<span style="color: {};">{:.0f}%</span>', color, obj.patience)
+        return format_html('<span style="color: {};">{}%</span>', color, obj.patience)
     patience_display.short_description = 'Patience'
 
     def satisfaction_display(self, obj):
         if obj.satisfaction >= 80:
             return format_html('<span style="color: green;">😊 {:.0f}%</span>', obj.satisfaction)
         elif obj.satisfaction >= 50:
-            return format_html('<span style="color: orange;">😐 {:.0f}%</span>', obj.satisfaction)
+            return format_html('<span style="color: orange;">😐 {}%</span>', obj.satisfaction)
         return format_html('<span style="color: red;">😠 {:.0f}%</span>', obj.satisfaction)
     satisfaction_display.short_description = 'Satisfaction'
 

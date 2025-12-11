@@ -7,11 +7,15 @@ urlpatterns = [
 
     # Game state
     path('game/<str:player_id>', views.game_state, name='game_state'),
+    path('game/state/<str:player_id>', views.game_state, name='game_state'),
 
     # Game actions
     path('tick/<str:player_id>', views.process_tick, name='process_tick'),
+    path('game/tick/<str:player_id>', views.process_tick, name='process_tick'),
     path('add-room/<str:player_id>', views.add_room, name='add_room'),
+    path('game/build-room/<str:player_id>', views.add_room, name='add_room'),
     path('clean-room/<str:player_id>/<str:room_id>', views.clean_room, name='clean_room'),
+    path('game/clean-room/<str:player_id>/<str:room_id>', views.clean_room, name='clean_room'),
     path('purchase-upgrade/<str:player_id>/<str:upgrade_id>', views.purchase_upgrade, name='purchase_upgrade'),
 
     # Tavern actions
