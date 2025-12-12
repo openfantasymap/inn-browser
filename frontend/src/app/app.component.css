@@ -126,6 +126,14 @@
   background: #d1fae5;
 }
 
+.room-card.drag-over {
+  border-color: #8b5cf6;
+  border-width: 3px;
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  transform: scale(1.05);
+}
+
 .room-header {
   display: flex;
   justify-content: space-between;
@@ -276,8 +284,13 @@
   border: 2px solid #e5e7eb;
   border-radius: 10px;
   padding: 12px;
-  cursor: pointer;
+  cursor: grab;
   transition: all 0.3s;
+  user-select: none;
+}
+
+.guest-card:active {
+  cursor: grabbing;
 }
 
 .guest-card:hover {
@@ -288,6 +301,11 @@
 .guest-card.selected {
   background: #ddd6fe;
   border-color: #7c3aed;
+}
+
+.guest-card.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
 }
 
 .guest-header {

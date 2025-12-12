@@ -39,7 +39,11 @@
              class="room-card"
              [class.occupied]="room.occupied"
              [class.selected]="selectedGuest"
-             (click)="selectedGuest && assignGuestToRoom(selectedGuest, room)">
+             [class.drag-over]="dragOverRoomId === room.id"
+             (click)="selectedGuest && assignGuestToRoom(selectedGuest, room)"
+             (dragover)="onRoomDragOver($event, room)"
+             (dragleave)="onRoomDragLeave($event, room)"
+             (drop)="onRoomDrop($event, room)">
           <div class="room-header">
             <span class="room-type">{{ getRoomTypeDisplay(room.room_type) }}</span>
             <span class="room-level">Lv.{{ room.level }}</span>
@@ -128,7 +132,11 @@
           <div *ngFor="let guest of getWaitingGuests()"
                class="guest-card"
                [class.selected]="selectedGuest?.id === guest.id"
-               (click)="selectGuest(guest)">
+               [class.dragging]="draggedGuest?.id === guest.id"
+               draggable="true"
+               (click)="selectGuest(guest)"
+               (dragstart)="onGuestDragStart($event, guest)"
+               (dragend)="onGuestDragEnd($event)">
             <div class="guest-header">
               <span class="guest-icon">{{ getGuestTypeDisplay(guest.guest_type) }}</span>
               <div class="guest-title">

@@ -16,6 +16,10 @@ export class AppComponent implements OnInit, OnDestroy {
   selectedGuest: Guest | null = null;
   RoomType = RoomType;
 
+  // Drag and drop state
+  draggedGuest: Guest | null = null;
+  dragOverRoomId: string | null = null;
+
   constructor(private gameService: GameService) {}
 
   ngOnInit(): void {
@@ -46,6 +50,59 @@ export class AppComponent implements OnInit, OnDestroy {
     if (!guest.room_id) {
       this.selectedGuest = guest;
     }
+  }
+
+  // Drag and Drop methods
+  onGuestDragStart(event: DragEvent, guest: Guest): void {
+    if (guest.room_id) return; // Only allow dragging waiting guests
+
+    this.draggedGuest = guest;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', guest.id);
+    }
+
+    // Add visual feedback
+    const target = event.target as HTMLElement;
+    target.style.opacity = '0.5';
+  }
+
+  onGuestDragEnd(event: DragEvent): void {
+    const target = event.target as HTMLElement;
+    target.style.opacity = '1';
+    this.draggedGuest = null;
+    this.dragOverRoomId = null;
+  }
+
+  onRoomDragOver(event: DragEvent, room: Room): void {
+    if (!this.draggedGuest || room.occupied) return;
+
+    event.preventDefault(); // Allow drop
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    this.dragOverRoomId = room.id;
+  }
+
+  onRoomDragLeave(event: DragEvent, room: Room): void {
+    if (this.dragOverRoomId === room.id) {
+      this.dragOverRoomId = null;
+    }
+  }
+
+  onRoomDrop(event: DragEvent, room: Room): void {
+    event.preventDefault();
+    this.dragOverRoomId = null;
+
+    if (!this.draggedGuest || room.occupied || this.draggedGuest.room_id) {
+      this.draggedGuest = null;
+      return;
+    }
+
+    // Assign the guest to the room
+    this.gameService.assignGuestToRoom(this.draggedGuest.id, room.id).subscribe();
+    this.draggedGuest = null;
+    this.selectedGuest = null;
   }
 
   cleanRoom(room: Room): void {
