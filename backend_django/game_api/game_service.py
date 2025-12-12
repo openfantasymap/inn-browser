@@ -136,6 +136,13 @@ class GameService:
                 room.cleanliness = min(100, room.cleanliness + 2.0)
                 room.save()
 
+        # Decrease patience for waiting guests (not assigned to rooms)
+        waiting_guests = game_state.guests.filter(room__isnull=True)
+        for guest in waiting_guests:
+            # Waiting guests lose patience faster (1.5 per tick)
+            guest.patience = max(0, guest.patience - 1.5)
+            guest.save()
+
         # Check for guests leaving
         guests_to_remove = []
         for guest in game_state.guests.all():
@@ -198,18 +205,14 @@ class GameService:
 
     @staticmethod
     def _try_spawn_guest(game_state: GameState):
-        """Try to spawn a new guest"""
-        # Check if we have capacity and available rooms
+        """Try to spawn a new guest to the waiting list"""
+        # Check total guest capacity (including waiting guests)
         current_guests = game_state.guests.count()
         if current_guests >= game_state.max_guests:
             return
 
-        available_rooms = game_state.rooms.filter(occupied=False)
-        if not available_rooms.exists():
-            return
-
-        # Spawn chance: 20% per tick
-        if random.random() > 0.2:
+        # Spawn chance: 30% per tick (higher since players now control assignment)
+        if random.random() > 0.3:
             return
 
         # Select random guest type with weighted probabilities
@@ -218,13 +221,10 @@ class GameService:
         # Create guest attributes based on type
         guest_data = GameService._get_guest_attributes(guest_type)
 
-        # Select a room
-        room = random.choice(list(available_rooms))
-
-        # Create guest
+        # Create guest in waiting list (no room assigned)
         guest = Guest.objects.create(
             game_state=game_state,
-            room=room,
+            room=None,  # Guest starts in waiting list
             name=random.choice(GameService.GUEST_NAMES),
             guest_type=guest_type,
             patience=100.0,
@@ -234,10 +234,6 @@ class GameService:
             stay_duration=guest_data['stay_duration'],
             check_in_time=timezone.now()
         )
-
-        # Mark room as occupied
-        room.occupied = True
-        room.save()
 
     @staticmethod
     def _select_random_guest_type() -> str:
