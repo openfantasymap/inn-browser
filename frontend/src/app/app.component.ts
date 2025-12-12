@@ -402,7 +402,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   getIngredientQuantity(ingredientId: string): number {
-    return this.gameState?.inventory.ingredients[ingredientId] || 0;
+    return this.gameState?.inventory.items[ingredientId] || 0;
   }
 
   getIngredientName(ingredientId: string): string {
