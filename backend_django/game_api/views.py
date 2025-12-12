@@ -52,6 +52,28 @@ def add_room(request, player_id):
 
 
 @api_view(['POST'])
+def assign_guest(request, player_id):
+    """Assign a waiting guest to an available room"""
+    try:
+        guest_id = request.data.get('guest_id')
+        room_id = request.data.get('room_id')
+
+        if not guest_id or not room_id:
+            return Response(
+                {'error': 'guest_id and room_id are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        game_state = GameService.assign_guest_to_room(player_id, int(guest_id), int(room_id))
+        serializer = GameStateSerializer(game_state)
+        return Response(serializer.data)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
 def clean_room(request, player_id, room_id):
     """Clean a specific room"""
     try:

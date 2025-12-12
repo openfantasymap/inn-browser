@@ -334,6 +334,42 @@ class GameService:
 
     @staticmethod
     @transaction.atomic
+    def assign_guest_to_room(player_id: str, guest_id: int, room_id: int) -> GameState:
+        """Assign a waiting guest to an available room"""
+        game_state = GameService.create_or_get_game_state(player_id)
+
+        # Get guest
+        try:
+            guest = game_state.guests.get(id=guest_id)
+        except Guest.DoesNotExist:
+            raise ValueError(f"Guest with id {guest_id} not found")
+
+        # Check if guest is already in a room
+        if guest.room is not None:
+            raise ValueError(f"Guest {guest.name} is already assigned to a room")
+
+        # Get room
+        try:
+            room = game_state.rooms.get(id=room_id)
+        except Room.DoesNotExist:
+            raise ValueError(f"Room with id {room_id} not found")
+
+        # Check if room is available
+        if room.occupied:
+            raise ValueError(f"Room is already occupied")
+
+        # Assign guest to room
+        guest.room = room
+        guest.save()
+
+        # Mark room as occupied
+        room.occupied = True
+        room.save()
+
+        return game_state
+
+    @staticmethod
+    @transaction.atomic
     def clean_room(player_id: str, room_id: str) -> GameState:
         """Clean a specific room"""
         game_state = GameService.create_or_get_game_state(player_id)

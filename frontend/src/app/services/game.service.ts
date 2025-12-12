@@ -49,9 +49,12 @@ export class GameService {
   }
 
   assignGuestToRoom(guestId: string, roomId: string): Observable<InnState> {
-    // Django backend auto-assigns guests, so this just returns current state
-    // Keep the method for compatibility but don't actually call backend
-    return this.getGameState();
+    return this.http.post<InnState>(
+      `${this.apiUrl}/assign-guest/${this.playerId}`,
+      { guest_id: parseInt(guestId, 10), room_id: parseInt(roomId, 10) }
+    ).pipe(
+      tap(state => this.gameStateSubject.next(state))
+    );
   }
 
   cleanRoom(roomId: string): Observable<InnState> {
