@@ -79,64 +79,64 @@ class Command(BaseCommand):
         upgrade_templates = [
             {
                 'upgrade_id': 'upgrade_income_1',
-                'name': 'Better Beds',
-                'description': 'Increase income from all rooms by 50%',
+                'name': 'Income Boost I',
+                'description': 'Increase income from all sources by 50%',
                 'cost': 200.0,
                 'effect_type': 'income_multiplier',
                 'effect_value': 1.5
             },
             {
                 'upgrade_id': 'upgrade_auto_clean',
-                'name': 'Hire Cleaning Staff',
-                'description': 'Automatically clean rooms over time',
+                'name': 'Auto-Maintenance',
+                'description': 'Automatically maintain facilities over time',
                 'cost': 300.0,
                 'effect_type': 'auto_clean',
                 'effect_value': 1.0
             },
             {
                 'upgrade_id': 'upgrade_capacity_1',
-                'name': 'Expand Inn',
-                'description': 'Increase max guest capacity by 5',
+                'name': 'Capacity Expansion I',
+                'description': 'Increase max capacity by 5',
                 'cost': 400.0,
                 'effect_type': 'guest_capacity',
                 'effect_value': 5.0
             },
             {
                 'upgrade_id': 'upgrade_room_standard',
-                'name': 'Unlock Standard Rooms',
-                'description': 'Unlock the ability to build Standard rooms (2x income)',
+                'name': 'Unlock Tier 2',
+                'description': 'Unlock the ability to build Tier 2 facilities (2x income)',
                 'cost': 500.0,
                 'effect_type': 'unlock_room',
                 'effect_value': 2.0
             },
             {
                 'upgrade_id': 'upgrade_income_2',
-                'name': 'Luxury Furnishings',
-                'description': 'Increase income from all rooms by 100%',
+                'name': 'Income Boost II',
+                'description': 'Increase income from all sources by 100%',
                 'cost': 1000.0,
                 'effect_type': 'income_multiplier',
                 'effect_value': 2.0
             },
             {
                 'upgrade_id': 'upgrade_room_deluxe',
-                'name': 'Unlock Deluxe Rooms',
-                'description': 'Unlock the ability to build Deluxe rooms (4x income)',
+                'name': 'Unlock Tier 3',
+                'description': 'Unlock the ability to build Tier 3 facilities (4x income)',
                 'cost': 2000.0,
                 'effect_type': 'unlock_room',
                 'effect_value': 4.0
             },
             {
-                'upgrade_id': 'upgrade_tavern',
-                'name': 'Build Tavern',
-                'description': 'Unlock the tavern to serve food and drinks to guests',
+                'upgrade_id': 'upgrade_feature_market',
+                'name': 'Unlock Marketplace',
+                'description': 'Unlock the marketplace to trade resources and craft items',
                 'cost': 150.0,
-                'effect_type': 'unlock_tavern',
+                'effect_type': 'unlock_tavern',  # Generic feature unlock
                 'effect_value': 1.0
             },
             {
                 'upgrade_id': 'upgrade_room_royal',
-                'name': 'Unlock Royal Suites',
-                'description': 'Unlock the ability to build Royal suites (8x income)',
+                'name': 'Unlock Tier 4',
+                'description': 'Unlock the ability to build Tier 4 facilities (8x income)',
                 'cost': 5000.0,
                 'effect_type': 'unlock_room',
                 'effect_value': 8.0
