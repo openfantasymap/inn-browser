@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class RoomType(models.TextChoices):
@@ -336,21 +337,25 @@ class PlayerRecipe(models.Model):
 
 
 class Upgrade(models.Model):
-    """Purchasable upgrades - player-specific instances"""
-    game_state = models.ForeignKey(GameState, on_delete=models.CASCADE, related_name='upgrades')
-    upgrade_template = models.ForeignKey(UpgradeTemplate, on_delete=models.PROTECT, related_name='instances')
+    """Player's purchased upgrades - created only when purchased"""
+    game_state = models.ForeignKey(GameState, on_delete=models.CASCADE, related_name='purchased_upgrades')
+    upgrade_template = models.ForeignKey(UpgradeTemplate, on_delete=models.PROTECT, related_name='player_purchases')
 
-    # Player-specific state
-    purchased = models.BooleanField(default=False)
+    # Purchase tracking
+    purchased_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        verbose_name = "Upgrade"
-        verbose_name_plural = "Upgrades"
+        verbose_name = "Purchased Upgrade"
+        verbose_name_plural = "Purchased Upgrades"
         unique_together = [['game_state', 'upgrade_template']]
 
     # Properties for backward compatibility
     @property
     def upgrade_id(self):
+        return self.upgrade_template.upgrade_id
+
+    @property
+    def id(self):
         return self.upgrade_template.upgrade_id
 
     @property
@@ -373,6 +378,10 @@ class Upgrade(models.Model):
     def effect_value(self):
         return self.upgrade_template.effect_value
 
+    @property
+    def purchased(self):
+        """For backward compatibility - always True since existence = purchased"""
+        return True
+
     def __str__(self):
-        status = "✓" if self.purchased else "✗"
-        return f"{status} {self.name}"
+        return f"✓ {self.name}"

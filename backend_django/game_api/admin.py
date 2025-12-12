@@ -205,10 +205,11 @@ class PlayerRecipeAdmin(admin.ModelAdmin):
 
 @admin.register(Upgrade)
 class UpgradeAdmin(admin.ModelAdmin):
-    list_display = ['upgrade_id', 'name', 'game_state', 'purchased_display',
+    list_display = ['upgrade_id', 'name', 'game_state', 'purchased_at',
                     'cost', 'effect_type_display']
-    list_filter = ['purchased', 'upgrade_template', 'game_state']
+    list_filter = ['upgrade_template', 'game_state', 'purchased_at']
     search_fields = ['upgrade_template__name', 'upgrade_template__upgrade_id']
+    readonly_fields = ['purchased_at']
 
     def upgrade_id(self, obj):
         return obj.upgrade_id
@@ -225,12 +226,6 @@ class UpgradeAdmin(admin.ModelAdmin):
     def effect_type_display(self, obj):
         return obj.effect_type
     effect_type_display.short_description = 'Effect Type'
-
-    def purchased_display(self, obj):
-        if obj.purchased:
-            return format_html('<span style="color: green;">✓ Purchased</span>')
-        return format_html('<span style="color: gray;">Not Purchased</span>')
-    purchased_display.short_description = 'Status'
 
 
 # ============================================================================
@@ -300,9 +295,8 @@ class UpgradeTemplateAdmin(admin.ModelAdmin):
     effect_display.short_description = 'Effect'
 
     def instance_count(self, obj):
-        total = obj.instances.count()
-        purchased = obj.instances.filter(purchased=True).count()
-        return format_html('{} / <strong>{}</strong> purchased', purchased, total)
+        purchased = obj.player_purchases.count()
+        return format_html('<strong>{}</strong> players purchased', purchased)
     instance_count.short_description = 'Usage'
 
 

@@ -54,23 +54,10 @@ class GameService:
                     cleanliness=100.0
                 )
 
-            # Create initial upgrade instances for all templates
-            GameService._create_initial_upgrades(game_state)
-
-            # Create recipes for all items
+            # Create recipes for all items (upgrades are NOT created upfront)
             GameService._create_recipes_for_items(game_state)
 
         return game_state
-
-    @staticmethod
-    def _create_initial_upgrades(game_state: GameState):
-        """Create upgrade instances for all available templates"""
-        for template in UpgradeTemplate.objects.all():
-            Upgrade.objects.create(
-                game_state=game_state,
-                upgrade_template=template,
-                purchased=False
-            )
 
     @staticmethod
     def _create_recipes_for_items(game_state: GameState):
@@ -303,12 +290,9 @@ class GameService:
 
         # Check if required upgrade is purchased
         if room_template.required_upgrade:
-            try:
-                upgrade = game_state.upgrades.get(
-                    upgrade_template=room_template.required_upgrade,
-                    purchased=True
-                )
-            except Upgrade.DoesNotExist:
+            if not game_state.purchased_upgrades.filter(
+                upgrade_template=room_template.required_upgrade
+            ).exists():
                 raise ValueError(
                     f"Room type {room_type} requires upgrade: {room_template.required_upgrade.name}"
                 )
@@ -389,32 +373,36 @@ class GameService:
         """Purchase an upgrade"""
         game_state = GameService.create_or_get_game_state(player_id)
 
+        # Get the upgrade template
         try:
-            upgrade = game_state.upgrades.get(
-                upgrade_template__upgrade_id=upgrade_id,
-                purchased=False
-            )
-        except Upgrade.DoesNotExist:
-            raise ValueError(f"Upgrade {upgrade_id} not found or already purchased")
+            upgrade_template = UpgradeTemplate.objects.get(upgrade_id=upgrade_id)
+        except UpgradeTemplate.DoesNotExist:
+            raise ValueError(f"Upgrade {upgrade_id} not found")
 
-        if game_state.gold < upgrade.cost:
-            raise ValueError(f"Not enough gold. Need {upgrade.cost}, have {game_state.gold}")
+        # Check if already purchased
+        if game_state.purchased_upgrades.filter(upgrade_template=upgrade_template).exists():
+            raise ValueError(f"Upgrade {upgrade_id} already purchased")
+
+        if game_state.gold < upgrade_template.cost:
+            raise ValueError(f"Not enough gold. Need {upgrade_template.cost}, have {game_state.gold}")
 
         # Deduct cost
-        game_state.gold -= upgrade.cost
+        game_state.gold -= upgrade_template.cost
 
-        # Mark as purchased
-        upgrade.purchased = True
-        upgrade.save()
+        # Create new Upgrade instance (purchase it)
+        upgrade = Upgrade.objects.create(
+            game_state=game_state,
+            upgrade_template=upgrade_template
+        )
 
         # Apply effect
-        if upgrade.effect_type == 'income_multiplier':
-            game_state.total_income_multiplier *= upgrade.effect_value
-        elif upgrade.effect_type == 'auto_clean':
+        if upgrade_template.effect_type == 'income_multiplier':
+            game_state.total_income_multiplier *= upgrade_template.effect_value
+        elif upgrade_template.effect_type == 'auto_clean':
             game_state.auto_clean_enabled = True
-        elif upgrade.effect_type == 'guest_capacity':
-            game_state.max_guests += int(upgrade.effect_value)
-        elif upgrade.effect_type == 'unlock_tavern':
+        elif upgrade_template.effect_type == 'guest_capacity':
+            game_state.max_guests += int(upgrade_template.effect_value)
+        elif upgrade_template.effect_type == 'unlock_tavern':
             game_state.tavern_unlocked = True
 
         game_state.save()

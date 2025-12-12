@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import GameState, Room, Guest, TavernItem, Ingredient, PlayerRecipe, Upgrade
+from .models import GameState, Room, Guest, TavernItem, Ingredient, PlayerRecipe, Upgrade, UpgradeTemplate
 
 
 class RoomSerializer(serializers.ModelSerializer):
@@ -61,21 +61,23 @@ class PlayerRecipeSerializer(serializers.ModelSerializer):
                   'times_crafted', 'discovered_at', 'unlocked_at']
 
 
-class UpgradeSerializer(serializers.ModelSerializer):
-    """Serializer for Upgrade model"""
+class UpgradeTemplateSerializer(serializers.Serializer):
+    """Serializer for UpgradeTemplate with purchase status"""
     id = serializers.CharField(source='upgrade_id', read_only=True)
-
-    class Meta:
-        model = Upgrade
-        fields = ['id', 'name', 'description', 'cost', 'purchased',
-                  'effect_type', 'effect_value']
+    name = serializers.CharField(read_only=True)
+    description = serializers.CharField(read_only=True)
+    cost = serializers.FloatField(read_only=True)
+    effect_type = serializers.CharField(read_only=True)
+    effect_value = serializers.FloatField(read_only=True)
+    purchased = serializers.BooleanField(read_only=True)
+    purchased_at = serializers.DateTimeField(read_only=True, allow_null=True)
 
 
 class GameStateSerializer(serializers.ModelSerializer):
     """Serializer for GameState model"""
     rooms = RoomSerializer(many=True, read_only=True)
     guests = GuestSerializer(many=True, read_only=True)
-    upgrades = UpgradeSerializer(many=True, read_only=True)
+    upgrades = serializers.SerializerMethodField()  # Return all templates with purchase status
     recipes = serializers.SerializerMethodField()  # Changed to use player_recipes
 
     # Angular expects these field names
@@ -119,6 +121,28 @@ class GameStateSerializer(serializers.ModelSerializer):
         """Get player's recipes (discovered and unlocked)"""
         player_recipes = obj.player_recipes.all()
         return PlayerRecipeSerializer(player_recipes, many=True).data
+
+    def get_upgrades(self, obj):
+        """Get all upgrade templates with purchase status for this player"""
+        all_templates = UpgradeTemplate.objects.all()
+        upgrades_data = []
+
+        for template in all_templates:
+            # Check if this upgrade has been purchased by this player
+            purchase = obj.purchased_upgrades.filter(upgrade_template=template).first()
+
+            upgrades_data.append({
+                'upgrade_id': template.upgrade_id,
+                'name': template.name,
+                'description': template.description,
+                'cost': template.cost,
+                'effect_type': template.effect_type,
+                'effect_value': template.effect_value,
+                'purchased': purchase is not None,
+                'purchased_at': purchase.purchased_at if purchase else None
+            })
+
+        return upgrades_data
 
 
 class GameStateListSerializer(serializers.ModelSerializer):
