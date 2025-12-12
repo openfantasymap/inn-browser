@@ -267,6 +267,137 @@
           </div>
         </div>
       </div>
+
+      <!-- Tavern Management -->
+      <div class="tavern-management" *ngIf="gameState.tavern_unlocked">
+        <h2>🍽️ Tavern Management</h2>
+
+        <!-- Item Inventory -->
+        <div class="item-inventory">
+          <h3>📦 Current Inventory</h3>
+          <div class="inventory-grid">
+            <div class="inventory-section">
+              <h4>🍖 Food Items</h4>
+              <div class="items-list">
+                <div *ngFor="let item of getFoodItems()" class="item-card">
+                  <span class="item-emoji">{{ getItemEmoji(item) }}</span>
+                  <div class="item-info">
+                    <span class="item-name" [style.color]="getQualityColor(item.quality)">
+                      {{ item.name }}
+                    </span>
+                    <span class="item-stock">Stock: {{ getItemCount(item.id) }}</span>
+                  </div>
+                </div>
+                <p *ngIf="getFoodItems().length === 0" class="empty-message">
+                  No food items available. Unlock recipes to craft!
+                </p>
+              </div>
+            </div>
+
+            <div class="inventory-section">
+              <h4>🍺 Beverages</h4>
+              <div class="items-list">
+                <div *ngFor="let item of getBeverageItems()" class="item-card">
+                  <span class="item-emoji">{{ getItemEmoji(item) }}</span>
+                  <div class="item-info">
+                    <span class="item-name" [style.color]="getQualityColor(item.quality)">
+                      {{ item.name }}
+                    </span>
+                    <span class="item-stock">Stock: {{ getItemCount(item.id) }}</span>
+                  </div>
+                </div>
+                <p *ngIf="getBeverageItems().length === 0" class="empty-message">
+                  No beverages available. Unlock recipes to craft!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item Crafting -->
+        <div class="item-crafting" *ngIf="getUnlockedRecipes().length > 0">
+          <h3>⚒️ Craft Items</h3>
+          <div class="crafting-list">
+            <div *ngFor="let recipe of getUnlockedRecipes()" class="crafting-card">
+              <div class="crafting-header">
+                <span class="item-name">{{ recipe.name }}</span>
+                <span class="ingredient-cost">Cost: {{ recipe.ingredients_cost }} 💰</span>
+              </div>
+              <div class="crafting-ingredients">
+                <span *ngFor="let req of recipe.required_ingredients" class="ingredient-req">
+                  {{ getIngredientName(req.ingredient_id) }} x{{ req.quantity }}
+                </span>
+              </div>
+              <div class="crafting-actions">
+                <button class="craft-btn"
+                        [disabled]="gameState.resources.gold < recipe.ingredients_cost"
+                        (click)="craftItemByRecipe(recipe, 1)">
+                  Craft 1
+                </button>
+                <button class="craft-btn craft-btn-bulk"
+                        [disabled]="gameState.resources.gold < recipe.ingredients_cost * 5"
+                        (click)="craftItemByRecipe(recipe, 5)">
+                  Craft 5
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Guest Serving -->
+        <div class="guest-serving" *ngIf="getAssignedGuests().length > 0">
+          <h3>🍴 Serve Guests</h3>
+          <div class="serving-list">
+            <div *ngFor="let guest of getAssignedGuests()" class="serving-card">
+              <div class="serving-guest-info">
+                <span class="guest-icon">{{ getGuestTypeDisplay(guest.guest_type) }}</span>
+                <div class="guest-details">
+                  <span class="guest-name">{{ guest.name }}</span>
+                  <span class="guest-type">{{ getGuestTypeName(guest.guest_type) }}</span>
+                  <div class="guest-service-status">
+                    <span [class.served]="guest.fed" [class.not-served]="!guest.fed">
+                      {{ guest.fed ? '✓ Fed' : '🍖 Needs Food' }}
+                    </span>
+                    <span [class.served]="guest.served_drink" [class.not-served]="!guest.served_drink">
+                      {{ guest.served_drink ? '✓ Drink Served' : '🍺 Needs Drink' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Food serving -->
+              <div class="serving-options" *ngIf="!guest.fed">
+                <span class="serving-label">Food:</span>
+                <div class="item-buttons">
+                  <button *ngFor="let item of getFoodItems()"
+                          class="serve-item-btn"
+                          [disabled]="!hasItemInInventory(item.id)"
+                          (click)="serveItem(guest, item)"
+                          [title]="item.name">
+                    {{ getItemEmoji(item) }} ({{ getItemCount(item.id) }})
+                  </button>
+                  <span *ngIf="getFoodItems().length === 0" class="no-items">No food available</span>
+                </div>
+              </div>
+
+              <!-- Beverage serving -->
+              <div class="serving-options" *ngIf="!guest.served_drink">
+                <span class="serving-label">Drink:</span>
+                <div class="item-buttons">
+                  <button *ngFor="let item of getBeverageItems()"
+                          class="serve-item-btn"
+                          [disabled]="!hasItemInInventory(item.id)"
+                          (click)="serveItem(guest, item)"
+                          [title]="item.name">
+                    {{ getItemEmoji(item) }} ({{ getItemCount(item.id) }})
+                  </button>
+                  <span *ngIf="getBeverageItems().length === 0" class="no-items">No beverages available</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

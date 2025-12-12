@@ -352,4 +352,21 @@ export class AppComponent implements OnInit, OnDestroy {
     const ingredient = this.gameState?.available_ingredients.find(i => i.id === ingredientId);
     return ingredient?.name || ingredientId;
   }
+
+  craftItemByRecipe(recipe: Recipe, quantity: number): void {
+    if (!this.gameState) return;
+
+    const totalCost = recipe.ingredients_cost * quantity;
+    if (this.gameState.resources.gold >= totalCost) {
+      // Find the tavern item associated with this recipe
+      const item = this.gameState.tavern_items.find(i => i.id === recipe.item_id);
+      if (item) {
+        this.craftItem(item, quantity);
+      }
+    }
+  }
+
+  getAssignedGuests(): Guest[] {
+    return this.gameState?.guests.filter(g => g.room_id !== null) || [];
+  }
 }
