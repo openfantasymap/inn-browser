@@ -84,19 +84,36 @@
         <h3>Build New Room</h3>
         <div class="build-buttons">
           <button (click)="buildRoom(RoomType.BASIC)"
-                  [disabled]="!canAffordRoom(RoomType.BASIC)"
-                  class="build-btn">
+                  [disabled]="!canAffordRoom(RoomType.BASIC) || !isRoomTypeUnlocked(RoomType.BASIC)"
+                  class="build-btn"
+                  [class.locked]="!isRoomTypeUnlocked(RoomType.BASIC)"
+                  [title]="!isRoomTypeUnlocked(RoomType.BASIC) ? 'Requires: ' + getRoomTypeRequirement(RoomType.BASIC) : ''">
             🛏️ Basic ({{ getRoomCost(RoomType.BASIC) }} gold)
+            <span *ngIf="!isRoomTypeUnlocked(RoomType.BASIC)" class="lock-icon">🔒</span>
           </button>
           <button (click)="buildRoom(RoomType.STANDARD)"
-                  [disabled]="!canAffordRoom(RoomType.STANDARD)"
-                  class="build-btn">
+                  [disabled]="!canAffordRoom(RoomType.STANDARD) || !isRoomTypeUnlocked(RoomType.STANDARD)"
+                  class="build-btn"
+                  [class.locked]="!isRoomTypeUnlocked(RoomType.STANDARD)"
+                  [title]="!isRoomTypeUnlocked(RoomType.STANDARD) ? 'Requires: ' + getRoomTypeRequirement(RoomType.STANDARD) : ''">
             🏠 Standard ({{ getRoomCost(RoomType.STANDARD) }} gold)
+            <span *ngIf="!isRoomTypeUnlocked(RoomType.STANDARD)" class="lock-icon">🔒</span>
           </button>
           <button (click)="buildRoom(RoomType.DELUXE)"
-                  [disabled]="!canAffordRoom(RoomType.DELUXE)"
-                  class="build-btn">
+                  [disabled]="!canAffordRoom(RoomType.DELUXE) || !isRoomTypeUnlocked(RoomType.DELUXE)"
+                  class="build-btn"
+                  [class.locked]="!isRoomTypeUnlocked(RoomType.DELUXE)"
+                  [title]="!isRoomTypeUnlocked(RoomType.DELUXE) ? 'Requires: ' + getRoomTypeRequirement(RoomType.DELUXE) : ''">
             🏰 Deluxe ({{ getRoomCost(RoomType.DELUXE) }} gold)
+            <span *ngIf="!isRoomTypeUnlocked(RoomType.DELUXE)" class="lock-icon">🔒</span>
+          </button>
+          <button (click)="buildRoom(RoomType.ROYAL)"
+                  [disabled]="!canAffordRoom(RoomType.ROYAL) || !isRoomTypeUnlocked(RoomType.ROYAL)"
+                  class="build-btn"
+                  [class.locked]="!isRoomTypeUnlocked(RoomType.ROYAL)"
+                  [title]="!isRoomTypeUnlocked(RoomType.ROYAL) ? 'Requires: ' + getRoomTypeRequirement(RoomType.ROYAL) : ''">
+            👑 Royal ({{ getRoomCost(RoomType.ROYAL) }} gold)
+            <span *ngIf="!isRoomTypeUnlocked(RoomType.ROYAL)" class="lock-icon">🔒</span>
           </button>
         </div>
       </div>
@@ -165,6 +182,88 @@
                     (click)="purchaseUpgrade(upgrade)">
               Purchase
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recipe Discovery (Tavern) -->
+      <div class="tavern-section" *ngIf="gameState.tavern_unlocked">
+        <h2>🧪 Recipe Experimentation</h2>
+
+        <!-- Ingredient Inventory -->
+        <div class="ingredient-inventory">
+          <h3>Available Ingredients</h3>
+          <div class="ingredients-grid">
+            <div *ngFor="let ingredient of getAvailableIngredients()"
+                 class="ingredient-item"
+                 [class.selected]="isIngredientSelected(ingredient.id)"
+                 (click)="toggleIngredientSelection(ingredient.id)">
+              <span class="ingredient-name">{{ ingredient.name }}</span>
+              <span class="ingredient-quantity">x{{ getIngredientQuantity(ingredient.id) }}</span>
+            </div>
+          </div>
+          <p *ngIf="getAvailableIngredients().length === 0" class="empty-message">
+            No ingredients available. Serve guests to collect ingredients!
+          </p>
+        </div>
+
+        <!-- Experiment Controls -->
+        <div class="experiment-controls" *ngIf="selectedIngredients.length > 0">
+          <div class="selected-ingredients">
+            <strong>Selected:</strong>
+            <span *ngFor="let ingId of selectedIngredients" class="selected-tag">
+              {{ getIngredientName(ingId) }}
+            </span>
+          </div>
+          <button class="experiment-btn" (click)="experimentWithIngredients()">
+            🧪 Experiment
+          </button>
+        </div>
+
+        <!-- Experiment Result -->
+        <div class="experiment-result" *ngIf="showExperimentResult && experimentMessage">
+          <p [innerHTML]="experimentMessage"></p>
+        </div>
+
+        <!-- Discovered Recipes -->
+        <div class="discovered-recipes" *ngIf="getDiscoveredRecipes().length > 0">
+          <h3>📜 Discovered Recipes</h3>
+          <div class="recipes-list">
+            <div *ngFor="let recipe of getDiscoveredRecipes()" class="recipe-card">
+              <div class="recipe-header">
+                <span class="recipe-name">{{ recipe.name }}</span>
+                <span class="recipe-status discovered-badge">🔍 Discovered</span>
+              </div>
+              <div class="recipe-ingredients">
+                <strong>Ingredients:</strong>
+                <ul>
+                  <li *ngFor="let req of recipe.required_ingredients">
+                    {{ getIngredientName(req.ingredient_id) }} x{{ req.quantity }}
+                  </li>
+                </ul>
+              </div>
+              <button class="unlock-recipe-btn"
+                      [disabled]="gameState.resources.gold < recipe.cost_to_unlock"
+                      (click)="unlockRecipe(recipe.id)">
+                Unlock ({{ recipe.cost_to_unlock }} 💰)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Unlocked Recipes -->
+        <div class="unlocked-recipes" *ngIf="getUnlockedRecipes().length > 0">
+          <h3>✅ Unlocked Recipes</h3>
+          <div class="recipes-list">
+            <div *ngFor="let recipe of getUnlockedRecipes()" class="recipe-card unlocked">
+              <div class="recipe-header">
+                <span class="recipe-name">{{ recipe.name }}</span>
+                <span class="recipe-status unlocked-badge">✓ Unlocked</span>
+              </div>
+              <div class="recipe-stats">
+                <span>Crafted: {{ recipe.times_crafted }} times</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -59,13 +59,53 @@ export interface TavernItem {
   description: string;
 }
 
+export interface IngredientRequirement {
+  ingredient_id: string;
+  quantity: number;
+}
+
 export interface Recipe {
   id: string;
   name: string;
   item_id: string;
   unlocked: boolean;
+  discovered: boolean;
   cost_to_unlock: number;
   ingredients_cost: number;
+  required_ingredients: IngredientRequirement[];
+  times_crafted: number;
+  discovered_at: string | null;
+  unlocked_at: string | null;
+}
+
+export enum IngredientRarity {
+  COMMON = 'common',
+  UNCOMMON = 'uncommon',
+  RARE = 'rare',
+  EPIC = 'epic',
+  LEGENDARY = 'legendary'
+}
+
+export interface Ingredient {
+  id: string;
+  name: string;
+  rarity: IngredientRarity;
+  description: string;
+  base_drop_chance: number;
+}
+
+export interface ExperimentResult {
+  success: boolean;
+  message: string;
+  discovered_recipe?: {
+    recipe_id: string;
+    name: string;
+    item_name: string;
+    unlocked: boolean;
+    cost_to_unlock: number;
+  };
+  consumed_ingredients?: boolean;
+  game_state: InnState;
 }
 
 export interface Inventory {
@@ -118,4 +158,5 @@ export interface InnState {
   recipes: Recipe[];
   inventory: Inventory;
   tavern_unlocked: boolean;
+  available_ingredients: Ingredient[];
 }
