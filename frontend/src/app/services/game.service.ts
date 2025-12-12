@@ -8,7 +8,7 @@ import { InnState, RoomType, ExperimentResult } from '../models/game.models';
   providedIn: 'root'
 })
 export class GameService {
-  private apiUrl = 'http://localhost:8001/api';  // Django backend on port 8001
+  private apiUrl = 'http://51.15.160.236/api';  // Django backend on port 8001
   private playerId = 'player_1'; // In a real app, this would come from auth
   private gameStateSubject = new BehaviorSubject<InnState | null>(null);
   public gameState$ = this.gameStateSubject.asObservable();
