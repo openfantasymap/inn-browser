@@ -332,7 +332,7 @@
               </div>
               <button class="unlock-recipe-btn"
                       [disabled]="gameState.resources.gold < recipe.cost_to_unlock"
-                      (click)="unlockRecipe(recipe.id)">
+                      (click)="unlockRecipe(recipe)">
                 Unlock ({{ recipe.cost_to_unlock }} 💰)
               </button>
             </div>
