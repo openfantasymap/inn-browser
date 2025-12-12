@@ -81,6 +81,25 @@
                 {{ room.cleanliness | number:'1.0-0' }}%
               </span>
             </div>
+            <div class="info-row">
+              <span>👥 Customers:</span>
+              <span>{{ room.customers_served }} / {{ getNextLevelThreshold(room.level) }}</span>
+            </div>
+          </div>
+
+          <!-- Level Progress Bar -->
+          <div class="level-progress" *ngIf="room.level < 4">
+            <div class="level-progress-bar">
+              <div class="level-progress-fill"
+                   [style.width.%]="getLevelProgress(room.customers_served, room.level)">
+              </div>
+            </div>
+            <div class="level-progress-text">
+              {{ getLevelProgress(room.customers_served, room.level) | number:'1.0-0' }}% to Lv.{{ room.level + 1 }}
+            </div>
+          </div>
+          <div class="max-level" *ngIf="room.level >= 4">
+            ⭐ MAX LEVEL ⭐
           </div>
 
           <div *ngIf="room.occupied" class="guest-in-room">

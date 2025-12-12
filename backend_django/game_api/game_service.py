@@ -210,8 +210,19 @@ class GameService:
 
             if should_leave:
                 if guest.room:
+                    # Increment customers served counter
+                    guest.room.customers_served += 1
+
+                    # Check if room should level up
+                    leveled_up = guest.room.check_and_level_up()
+
+                    # Mark room as unoccupied
                     guest.room.occupied = False
                     guest.room.save()
+
+                    # Optional: could add level up notification here
+                    # if leveled_up:
+                    #     print(f"Room {guest.room.id} leveled up to {guest.room.level}!")
 
                 # Add reputation
                 if guest.satisfaction >= 80:

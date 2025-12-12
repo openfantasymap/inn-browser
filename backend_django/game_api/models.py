@@ -244,10 +244,27 @@ class Room(models.Model):
     level = models.IntegerField(default=1)
     occupied = models.BooleanField(default=False)
     cleanliness = models.FloatField(default=100.0)
+    customers_served = models.IntegerField(default=0)  # Track customers for auto-leveling
 
     class Meta:
         verbose_name = "Room"
         verbose_name_plural = "Rooms"
+
+    def check_and_level_up(self):
+        """Check if room should level up based on customers served"""
+        # Level thresholds: 10, 100, 1000 customers
+        thresholds = [
+            (1, 10),    # Level 1 -> 2 at 10 customers
+            (2, 100),   # Level 2 -> 3 at 100 customers
+            (3, 1000),  # Level 3 -> 4 at 1000 customers
+        ]
+
+        for current_level, threshold in thresholds:
+            if self.level == current_level and self.customers_served >= threshold:
+                self.level += 1
+                return True  # Leveled up
+
+        return False  # No level up
 
     @property
     def income_rate(self):

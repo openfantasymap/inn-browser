@@ -82,6 +82,7 @@ export interface Room {
   current_guest: string | null;
   income_rate: number;
   cleanliness: number;
+  customers_served: number;
 }
 
 export enum ItemType {

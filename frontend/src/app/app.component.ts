@@ -455,4 +455,23 @@ export class AppComponent implements OnInit, OnDestroy {
     const totalCost = this.getIngredientPrice(ingredient) * quantity;
     return this.gameState.resources.gold >= totalCost;
   }
+
+  // Room leveling helpers
+  getNextLevelThreshold(currentLevel: number): number {
+    const thresholds: { [key: number]: number } = {
+      1: 10,
+      2: 100,
+      3: 1000,
+      4: 9999  // Max level
+    };
+    return thresholds[currentLevel] || 9999;
+  }
+
+  getLevelProgress(customersServed: number, currentLevel: number): number {
+    if (currentLevel >= 4) return 100;  // Max level reached
+
+    const threshold = this.getNextLevelThreshold(currentLevel);
+    const progress = (customersServed / threshold) * 100;
+    return Math.min(progress, 100);
+  }
 }

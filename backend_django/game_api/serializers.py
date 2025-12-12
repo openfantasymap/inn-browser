@@ -9,7 +9,7 @@ class RoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = Room
         fields = ['id', 'room_type', 'level', 'occupied', 'current_guest',
-                  'income_rate', 'cleanliness']
+                  'income_rate', 'cleanliness', 'customers_served']
 
     def get_current_guest(self, obj):
         """Get the ID of the guest currently in this room"""
