@@ -464,6 +464,119 @@
   margin-top: 0;
 }
 
+/* Ingredient Store */
+.store-description {
+  color: #6b7280;
+  margin-bottom: 15px;
+  font-style: italic;
+}
+
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.store-item-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 15px;
+  transition: all 0.3s;
+}
+
+.store-item-card:hover {
+  border-color: #8b5cf6;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+  transform: translateY(-2px);
+}
+
+.store-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.store-item-name {
+  font-weight: bold;
+  font-size: 1.05em;
+}
+
+.rarity-badge {
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.store-item-description {
+  font-size: 0.9em;
+  color: #6b7280;
+  margin: 10px 0;
+  min-height: 40px;
+}
+
+.store-item-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.current-stock {
+  font-size: 0.85em;
+  color: #4b5563;
+}
+
+.price-tag {
+  font-weight: bold;
+  color: #f59e0b;
+  font-size: 0.9em;
+}
+
+.buy-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.buy-btn {
+  flex: 1;
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+  font-size: 0.9em;
+}
+
+.buy-btn:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-2px);
+}
+
+.buy-btn:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.buy-btn-bulk {
+  background: #3b82f6;
+}
+
+.buy-btn-bulk:hover:not(:disabled) {
+  background: #2563eb;
+}
+
 /* Ingredient Inventory */
 .ingredient-inventory {
   margin-bottom: 20px;

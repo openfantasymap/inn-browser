@@ -156,4 +156,13 @@ export class GameService {
     if (!gameState) return [];
     return gameState.recipes.filter(r => r.unlocked);
   }
+
+  purchaseIngredient(ingredientId: string, quantity: number): Observable<InnState> {
+    return this.http.post<InnState>(
+      `${this.apiUrl}/purchase-ingredient/${this.playerId}`,
+      { ingredient_id: ingredientId, quantity: quantity }
+    ).pipe(
+      tap(state => this.gameStateSubject.next(state))
+    );
+  }
 }

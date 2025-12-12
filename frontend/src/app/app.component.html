@@ -194,6 +194,46 @@
         </div>
       </div>
 
+      <!-- Ingredient Store -->
+      <div class="tavern-section" *ngIf="gameState.tavern_unlocked">
+        <h2>🏪 Ingredient Store</h2>
+        <p class="store-description">Purchase common and uncommon ingredients for your recipes!</p>
+
+        <div class="store-grid">
+          <div *ngFor="let ingredient of getStoreIngredients()" class="store-item-card">
+            <div class="store-item-header">
+              <span class="store-item-name" [style.color]="getIngredientRarityColor(ingredient.rarity)">
+                {{ ingredient.name }}
+              </span>
+              <span class="rarity-badge" [style.background-color]="getIngredientRarityColor(ingredient.rarity)">
+                {{ ingredient.rarity }}
+              </span>
+            </div>
+            <p class="store-item-description">{{ ingredient.description }}</p>
+            <div class="store-item-info">
+              <span class="current-stock">In stock: {{ getIngredientQuantity(ingredient.id) }}</span>
+              <span class="price-tag">{{ getIngredientPrice(ingredient) }} 💰 each</span>
+            </div>
+            <div class="buy-buttons">
+              <button class="buy-btn"
+                      [disabled]="!canAffordIngredient(ingredient, 1)"
+                      (click)="buyIngredient(ingredient, 1)">
+                Buy 1 ({{ getIngredientPrice(ingredient) }}💰)
+              </button>
+              <button class="buy-btn buy-btn-bulk"
+                      [disabled]="!canAffordIngredient(ingredient, 5)"
+                      (click)="buyIngredient(ingredient, 5)">
+                Buy 5 ({{ getIngredientPrice(ingredient) * 5 }}💰)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p *ngIf="getStoreIngredients().length === 0" class="empty-message">
+          Store is currently closed. Unlock the tavern first!
+        </p>
+      </div>
+
       <!-- Recipe Discovery (Tavern) -->
       <div class="tavern-section" *ngIf="gameState.tavern_unlocked">
         <h2>🧪 Recipe Experimentation</h2>

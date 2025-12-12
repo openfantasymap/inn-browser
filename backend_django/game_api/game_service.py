@@ -544,6 +544,44 @@ class GameService:
 
     @staticmethod
     @transaction.atomic
+    def purchase_ingredient(player_id: str, ingredient_id: str, quantity: int = 1) -> GameState:
+        """Purchase ingredients from the store (only common and uncommon)"""
+        game_state = GameService.create_or_get_game_state(player_id)
+
+        # Get ingredient
+        try:
+            ingredient = Ingredient.objects.get(ingredient_id=ingredient_id)
+        except Ingredient.DoesNotExist:
+            raise ValueError(f"Ingredient {ingredient_id} not found")
+
+        # Only allow purchasing common and uncommon ingredients
+        if ingredient.rarity not in ['common', 'uncommon']:
+            raise ValueError(f"Cannot purchase {ingredient.rarity} ingredients. Only common and uncommon ingredients are available in the store.")
+
+        # Calculate price based on rarity
+        INGREDIENT_PRICES = {
+            'common': 5.0,
+            'uncommon': 15.0,
+        }
+        price_per_unit = INGREDIENT_PRICES.get(ingredient.rarity, 10.0)
+        total_cost = price_per_unit * quantity
+
+        # Check if player has enough gold
+        if game_state.gold < total_cost:
+            raise ValueError(f"Not enough gold. Need {total_cost}, have {game_state.gold}")
+
+        # Deduct gold
+        game_state.gold -= total_cost
+
+        # Add ingredients to inventory
+        current_amount = game_state.ingredient_inventory.get(ingredient_id, 0)
+        game_state.ingredient_inventory[ingredient_id] = current_amount + quantity
+
+        game_state.save()
+        return game_state
+
+    @staticmethod
+    @transaction.atomic
     def experiment_with_ingredients(player_id: str, ingredient_ids: list) -> dict:
         """
         Experiment with ingredient combinations to discover recipes.

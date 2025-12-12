@@ -426,4 +426,33 @@ export class AppComponent implements OnInit, OnDestroy {
   getAssignedGuests(): Guest[] {
     return this.gameState?.guests.filter(g => g.room_id !== null) || [];
   }
+
+  // Ingredient Store methods
+  getStoreIngredients(): Ingredient[] {
+    // Only show common and uncommon ingredients in the store
+    return this.gameState?.available_ingredients.filter(
+      i => i.rarity === 'common' || i.rarity === 'uncommon'
+    ) || [];
+  }
+
+  getIngredientPrice(ingredient: Ingredient): number {
+    const prices: { [key: string]: number } = {
+      'common': 5,
+      'uncommon': 15
+    };
+    return prices[ingredient.rarity] || 10;
+  }
+
+  buyIngredient(ingredient: Ingredient, quantity: number): void {
+    const totalCost = this.getIngredientPrice(ingredient) * quantity;
+    if (this.gameState && this.gameState.resources.gold >= totalCost) {
+      this.gameService.purchaseIngredient(ingredient.id, quantity).subscribe();
+    }
+  }
+
+  canAffordIngredient(ingredient: Ingredient, quantity: number): boolean {
+    if (!this.gameState) return false;
+    const totalCost = this.getIngredientPrice(ingredient) * quantity;
+    return this.gameState.resources.gold >= totalCost;
+  }
 }

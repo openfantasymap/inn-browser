@@ -151,6 +151,28 @@ def serve_guest(request, player_id):
 
 
 @api_view(['POST'])
+def purchase_ingredient(request, player_id):
+    """Purchase ingredients from the store"""
+    try:
+        ingredient_id = request.data.get('ingredient_id')
+        quantity = request.data.get('quantity', 1)
+
+        if not ingredient_id:
+            return Response({'error': 'ingredient_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not isinstance(quantity, int) or quantity < 1:
+            return Response({'error': 'quantity must be a positive integer'}, status=status.HTTP_400_BAD_REQUEST)
+
+        game_state = GameService.purchase_ingredient(player_id, ingredient_id, quantity)
+        serializer = GameStateSerializer(game_state)
+        return Response(serializer.data)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
 def experiment_with_ingredients(request, player_id):
     """Experiment with ingredient combinations to discover recipes"""
     try:
