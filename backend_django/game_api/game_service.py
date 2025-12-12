@@ -15,15 +15,43 @@ from .models import (
 class GameService:
     """Service class for game logic"""
 
-    # Guest names pool
+    # Guest names pool - diverse fantasy names
     GUEST_NAMES = [
+        # Traditional fantasy
         "Aldric", "Brunhilde", "Cedric", "Elara", "Finnian",
         "Gwendolyn", "Thorne", "Isolde", "Magnus", "Rosalind",
         "Gareth", "Freya", "Ragnar", "Sylvia", "Oswald",
         "Bjorn", "Aria", "Dorian", "Lyra", "Cassius",
         "Seraphina", "Orion", "Luna", "Dante", "Aurora",
         "Zephyr", "Celeste", "Raven", "Phoenix", "Sage",
-        "Grimwald", "Mystique", "Shadow", "Titus", "Ophelia"
+        "Grimwald", "Mystique", "Shadow", "Titus", "Ophelia",
+        # Nordic/Viking
+        "Erik", "Astrid", "Leif", "Ingrid", "Sven", "Helga",
+        "Torsten", "Sigrid", "Gunnar", "Thyra", "Knut", "Runa",
+        # Elvish/Celtic
+        "Aelindra", "Thalion", "Miriel", "Galador", "Arwen", "Legolas",
+        "Galadriel", "Celeborn", "Elowen", "Faelan", "Niamh", "Oisin",
+        # Dwarven
+        "Thorin", "Balin", "Dwalin", "Gimli", "Gloin", "Bombur",
+        "Dain", "Brok", "Sindri", "Gromdal", "Thora", "Helga",
+        # Exotic/Eastern
+        "Akira", "Mei", "Kenji", "Yuki", "Rashid", "Amara",
+        "Kamala", "Tariq", "Zara", "Malik", "Sakura", "Hiro",
+        # Nature-inspired
+        "River", "Storm", "Willow", "Oak", "Ember", "Frost",
+        "Breeze", "Cloud", "Rain", "Stone", "Leaf", "Thorn",
+        # Noble/Royal
+        "Reginald", "Victoria", "Edmund", "Beatrice", "Leopold", "Constance",
+        "Ferdinand", "Marguerite", "Percival", "Anastasia", "Maximilian", "Cordelia",
+        # Mysterious/Dark
+        "Morrigan", "Vesper", "Nyx", "Rook", "Obsidian", "Sable",
+        "Corvus", "Umbra", "Dusk", "Void", "Eclipse", "Nightshade",
+        # Merchant/Commoner
+        "Tobias", "Clara", "Willem", "Marta", "Hans", "Gretel",
+        "Bruno", "Agnes", "Otto", "Helene", "Franz", "Liesel",
+        # Adventurer
+        "Drake", "Valor", "Quest", "Justice", "Honor", "Glory",
+        "Fortune", "Destiny", "Chance", "Lucky", "Venture", "Odyssey"
     ]
 
     @staticmethod
@@ -40,6 +68,10 @@ class GameService:
                 'auto_clean_enabled': False,
                 'game_speed': 1.0,
                 'tavern_unlocked': False,
+                'max_offline_hours': 12.0,
+                # Random map location (100x100 grid)
+                'map_x': random.randint(0, 99),
+                'map_y': random.randint(0, 99),
             }
         )
 
@@ -56,6 +88,9 @@ class GameService:
 
             # Create recipes for all items (upgrades are NOT created upfront)
             GameService._create_recipes_for_items(game_state)
+        else:
+            # Process offline earnings when player returns
+            GameService._process_offline_progress(game_state)
 
         return game_state
 
@@ -75,6 +110,34 @@ class GameService:
                 unlocked_at=timezone.now() if should_unlock else None,
                 times_crafted=0
             )
+
+    @staticmethod
+    def _process_offline_progress(game_state: GameState):
+        """Calculate and apply offline earnings when player returns"""
+        now = timezone.now()
+        time_offline = (now - game_state.last_online).total_seconds() / 3600  # Convert to hours
+
+        # Cap offline time at max_offline_hours
+        effective_hours = min(time_offline, game_state.max_offline_hours)
+
+        if effective_hours > 0.5:  # Only process if offline for more than 30 minutes
+            # Calculate hourly income from occupied rooms
+            hourly_income = 0.0
+            for room in game_state.rooms.filter(occupied=True):
+                hourly_income += room.income_rate * game_state.total_income_multiplier
+
+            # Calculate total offline earnings
+            offline_earnings = hourly_income * effective_hours
+
+            if offline_earnings > 0:
+                game_state.gold += offline_earnings
+                # Store offline earnings info for frontend display
+                game_state.last_offline_earnings = offline_earnings
+                game_state.last_offline_hours = effective_hours
+
+        # Update last_online timestamp
+        game_state.last_online = now
+        game_state.save()
 
     @staticmethod
     @transaction.atomic
@@ -404,6 +467,8 @@ class GameService:
             game_state.max_guests += int(upgrade_template.effect_value)
         elif upgrade_template.effect_type == 'unlock_tavern':
             game_state.tavern_unlocked = True
+        elif upgrade_template.effect_type == 'offline_hours':
+            game_state.max_offline_hours = upgrade_template.effect_value
 
         game_state.save()
         return game_state

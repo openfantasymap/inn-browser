@@ -6,19 +6,70 @@ export enum RoomType {
 }
 
 export enum GuestType {
+  // Common travelers
   PEASANT = 'peasant',
   MERCHANT = 'merchant',
   NOBLE = 'noble',
   ADVENTURER = 'adventurer',
+
+  // Magical types
   WIZARD = 'wizard',
+  SORCERER = 'sorcerer',
+  WITCH = 'witch',
+  ALCHEMIST = 'alchemist',
+  NECROMANCER = 'necromancer',
+
+  // Warriors
+  KNIGHT = 'knight',
+  PALADIN = 'paladin',
+  RANGER = 'ranger',
+  BARBARIAN = 'barbarian',
+  SAMURAI = 'samurai',
+
+  // Rogues/Outlaws
   BANDIT = 'bandit',
+  THIEF = 'thief',
+  ASSASSIN = 'assassin',
+  SMUGGLER = 'smuggler',
+
+  // Religious/Spiritual
   MONK = 'monk',
+  PRIEST = 'priest',
+  CLERIC = 'cleric',
+  DRUID = 'druid',
+
+  // Entertainers
   BARD = 'bard',
+  JESTER = 'jester',
+  MINSTREL = 'minstrel',
+  ACTOR = 'actor',
+
+  // Craftspeople
+  BLACKSMITH = 'blacksmith',
+  CARPENTER = 'carpenter',
+  JEWELER = 'jeweler',
+  TAILOR = 'tailor',
+
+  // Scholars
+  SCHOLAR = 'scholar',
+  SCRIBE = 'scribe',
+  LIBRARIAN = 'librarian',
+  HISTORIAN = 'historian',
+
+  // Exotic/Rare
   DRAGON_DISGUISED = 'dragon_disguised',
+  VAMPIRE = 'vampire',
+  WEREWOLF = 'werewolf',
+  ELF = 'elf',
+  DWARF = 'dwarf',
+  HALFLING = 'halfling',
+  ORC = 'orc',
+
+  // Special
   BEGGAR = 'beggar',
   PRINCE = 'prince',
-  THIEF = 'thief',
-  SCHOLAR = 'scholar',
+  PIRATE = 'pirate',
+  SPY = 'spy',
   DRUNK = 'drunk',
   GHOST = 'ghost'
 }
@@ -145,6 +196,16 @@ export interface Resources {
   max_guests: number;
 }
 
+export interface Location {
+  x: number;
+  y: number;
+}
+
+export interface OfflineProgress {
+  earnings: number;
+  hours: number;
+}
+
 export interface InnState {
   resources: Resources;
   rooms: Room[];
@@ -159,4 +220,7 @@ export interface InnState {
   inventory: Inventory;
   tavern_unlocked: boolean;
   available_ingredients: Ingredient[];
+  location: Location;
+  offline_progress: OfflineProgress;
+  max_offline_hours: number;
 }

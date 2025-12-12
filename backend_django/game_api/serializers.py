@@ -85,13 +85,16 @@ class GameStateSerializer(serializers.ModelSerializer):
     available_ingredients = serializers.SerializerMethodField()
     resources = serializers.SerializerMethodField()
     inventory = serializers.SerializerMethodField()
+    location = serializers.SerializerMethodField()
+    offline_progress = serializers.SerializerMethodField()
 
     class Meta:
         model = GameState
         fields = ['resources', 'rooms', 'guests', 'upgrades', 'recipes',
                   'total_income_multiplier', 'auto_clean_enabled',
                   'game_speed', 'last_update', 'tavern_unlocked',
-                  'tavern_items', 'inventory', 'available_ingredients']
+                  'tavern_items', 'inventory', 'available_ingredients',
+                  'location', 'offline_progress', 'max_offline_hours']
 
     def get_resources(self, obj):
         """Get resources in the format expected by Angular frontend"""
@@ -99,6 +102,20 @@ class GameStateSerializer(serializers.ModelSerializer):
             'gold': obj.gold,
             'reputation': obj.reputation,
             'max_guests': obj.max_guests
+        }
+
+    def get_location(self, obj):
+        """Get inn location on the map"""
+        return {
+            'x': obj.map_x,
+            'y': obj.map_y
+        }
+
+    def get_offline_progress(self, obj):
+        """Get offline earnings information"""
+        return {
+            'earnings': obj.last_offline_earnings,
+            'hours': obj.last_offline_hours
         }
 
     def get_inventory(self, obj):

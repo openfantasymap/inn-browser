@@ -11,19 +11,70 @@ class RoomType(models.TextChoices):
 
 
 class GuestType(models.TextChoices):
+    # Common travelers
     PEASANT = 'peasant', 'Peasant'
     MERCHANT = 'merchant', 'Merchant'
     NOBLE = 'noble', 'Noble'
     ADVENTURER = 'adventurer', 'Adventurer'
+
+    # Magical types
     WIZARD = 'wizard', 'Wizard'
+    SORCERER = 'sorcerer', 'Sorcerer'
+    WITCH = 'witch', 'Witch'
+    ALCHEMIST = 'alchemist', 'Alchemist'
+    NECROMANCER = 'necromancer', 'Necromancer'
+
+    # Warriors
+    KNIGHT = 'knight', 'Knight'
+    PALADIN = 'paladin', 'Paladin'
+    RANGER = 'ranger', 'Ranger'
+    BARBARIAN = 'barbarian', 'Barbarian'
+    SAMURAI = 'samurai', 'Samurai'
+
+    # Rogues/Outlaws
     BANDIT = 'bandit', 'Bandit'
+    THIEF = 'thief', 'Thief'
+    ASSASSIN = 'assassin', 'Assassin'
+    SMUGGLER = 'smuggler', 'Smuggler'
+
+    # Religious/Spiritual
     MONK = 'monk', 'Monk'
+    PRIEST = 'priest', 'Priest'
+    CLERIC = 'cleric', 'Cleric'
+    DRUID = 'druid', 'Druid'
+
+    # Entertainers
     BARD = 'bard', 'Bard'
+    JESTER = 'jester', 'Jester'
+    MINSTREL = 'minstrel', 'Minstrel'
+    ACTOR = 'actor', 'Actor'
+
+    # Craftspeople
+    BLACKSMITH = 'blacksmith', 'Blacksmith'
+    CARPENTER = 'carpenter', 'Carpenter'
+    JEWELER = 'jeweler', 'Jeweler'
+    TAILOR = 'tailor', 'Tailor'
+
+    # Scholars
+    SCHOLAR = 'scholar', 'Scholar'
+    SCRIBE = 'scribe', 'Scribe'
+    LIBRARIAN = 'librarian', 'Librarian'
+    HISTORIAN = 'historian', 'Historian'
+
+    # Exotic/Rare
     DRAGON_DISGUISED = 'dragon_disguised', 'Dragon (Disguised)'
+    VAMPIRE = 'vampire', 'Vampire'
+    WEREWOLF = 'werewolf', 'Werewolf'
+    ELF = 'elf', 'Elf'
+    DWARF = 'dwarf', 'Dwarf'
+    HALFLING = 'halfling', 'Halfling'
+    ORC = 'orc', 'Orc'
+
+    # Special
     BEGGAR = 'beggar', 'Beggar'
     PRINCE = 'prince', 'Prince'
-    THIEF = 'thief', 'Thief'
-    SCHOLAR = 'scholar', 'Scholar'
+    PIRATE = 'pirate', 'Pirate'
+    SPY = 'spy', 'Spy'
     DRUNK = 'drunk', 'Drunk'
     GHOST = 'ghost', 'Ghost'
 
@@ -160,6 +211,16 @@ class GameState(models.Model):
     auto_clean_enabled = models.BooleanField(default=False)
     game_speed = models.FloatField(default=1.0)
     tavern_unlocked = models.BooleanField(default=False)
+
+    # Offline timer settings (in hours)
+    max_offline_hours = models.FloatField(default=12.0)  # Can be upgraded to 24, 48
+    last_online = models.DateTimeField(default=timezone.now)
+    last_offline_earnings = models.FloatField(default=0.0)  # For display purposes
+    last_offline_hours = models.FloatField(default=0.0)  # For display purposes
+
+    # Map location
+    map_x = models.IntegerField(default=0)  # X coordinate on the map
+    map_y = models.IntegerField(default=0)  # Y coordinate on the map
 
     # Inventories (stored as JSON)
     item_inventory = models.JSONField(default=dict)  # {item_id: quantity}

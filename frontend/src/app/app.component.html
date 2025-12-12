@@ -27,6 +27,27 @@
       <span class="resource-label">Income Multiplier:</span>
       <span class="resource-value">{{ gameState.total_income_multiplier | number:'1.0-1' }}x</span>
     </div>
+    <div class="resource">
+      <span class="resource-icon">🗺️</span>
+      <span class="resource-label">Location:</span>
+      <span class="resource-value">({{ gameState.location.x }}, {{ gameState.location.y }})</span>
+    </div>
+    <div class="resource">
+      <span class="resource-icon">⏰</span>
+      <span class="resource-label">Max Offline:</span>
+      <span class="resource-value">{{ gameState.max_offline_hours }}h</span>
+    </div>
+  </div>
+
+  <!-- Offline Earnings Notification -->
+  <div class="offline-earnings" *ngIf="gameState.offline_progress.earnings > 0">
+    <div class="notification">
+      <span class="notification-icon">💤</span>
+      <span class="notification-text">
+        Welcome back! You earned <strong>{{ gameState.offline_progress.earnings | number:'1.0-0' }}</strong> gold
+        while offline for <strong>{{ gameState.offline_progress.hours | number:'1.0-1' }}</strong> hours!
+      </span>
+    </div>
   </div>
 
   <!-- Main Game Area -->
