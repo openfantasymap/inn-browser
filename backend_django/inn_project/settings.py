@@ -129,3 +129,24 @@ STRIPE_WEBHOOK_SECRET = os.environ.get(
     'STRIPE_WEBHOOK_SECRET',
     ''  # Optional for development, required for production
 )
+
+# ============================================================================
+# OPENROUTER CONFIGURATION
+# ============================================================================
+# OpenRouter is a unified API for accessing multiple LLMs
+# Get API key from: https://openrouter.ai/keys
+OPENROUTER_API_KEY = os.environ.get(
+    'OPENROUTER_API_KEY',
+    ''  # Add your OpenRouter API key here or via environment variable
+)
+
+# Default model to use for guest generation
+# Free options: 'meta-llama/llama-3.1-8b-instruct:free', 'google/gemini-2.0-flash-exp:free'
+# Paid options: 'anthropic/claude-3.5-sonnet', 'openai/gpt-4o-mini', etc.
+OPENROUTER_DEFAULT_MODEL = os.environ.get(
+    'OPENROUTER_DEFAULT_MODEL',
+    'meta-llama/llama-3.1-8b-instruct:free'  # Free tier model
+)
+
+# Enable/disable LLM guest generation (falls back to traditional generation if disabled or fails)
+USE_LLM_GUEST_GENERATION = os.environ.get('USE_LLM_GUEST_GENERATION', 'true').lower() == 'true'

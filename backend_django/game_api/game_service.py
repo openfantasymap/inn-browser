@@ -11,6 +11,7 @@ from .models import (
     PlayerRecipe, Upgrade, GuestType, RoomTypeTemplate, UpgradeTemplate, RecipeTemplate,
     ActiveBuff, PremiumPurchase
 )
+from .llm_service import get_llm_service
 
 
 class GameService:
@@ -267,7 +268,7 @@ class GameService:
 
     @staticmethod
     def _try_spawn_guest(game_state: GameState):
-        """Try to spawn a new guest to the waiting list"""
+        """Try to spawn a new guest to the waiting list (with LLM-generated stats)"""
         # Check total guest capacity (including waiting guests)
         current_guests = game_state.guests.count()
         if current_guests >= game_state.max_guests:
@@ -280,20 +281,49 @@ class GameService:
         # Select random guest type with weighted probabilities
         guest_type = GameService._select_random_guest_type()
 
-        # Create guest attributes based on type
-        guest_data = GameService._get_guest_attributes(guest_type)
+        # Try to generate guest name with LLM (fallback to traditional)
+        llm = get_llm_service()
+        guest_name = None
+        if llm.enabled:
+            guest_name = llm.generate_guest_name(guest_type)
+
+        # Fallback to traditional name pool if LLM fails
+        if not guest_name:
+            guest_name = random.choice(GameService.GUEST_NAMES)
+
+        # Try to generate stats with LLM (fallback to traditional)
+        llm_stats = None
+        if llm.enabled:
+            llm_stats = llm.generate_guest_stats(guest_type, guest_name)
+
+        # Use LLM stats if available, otherwise fallback to traditional
+        if llm_stats:
+            # LLM-generated stats
+            patience = llm_stats['patience']
+            satisfaction = llm_stats['satisfaction']
+            gold_per_tick = llm_stats['gold_per_tick']
+            reputation_bonus = llm_stats['reputation_bonus']
+            stay_duration = llm_stats['stay_duration']
+        else:
+            # Traditional attribute generation
+            guest_data = GameService._get_guest_attributes(guest_type)
+            patience = 100.0  # Default starting patience
+            satisfaction = 50.0  # Default starting satisfaction
+            gold_per_tick = guest_data['gold_per_tick']
+            reputation_bonus = guest_data['reputation_bonus']
+            stay_duration = guest_data['stay_duration']
 
         # Create guest in waiting list (no room assigned)
         guest = Guest.objects.create(
             game_state=game_state,
             room=None,  # Guest starts in waiting list
-            name=random.choice(GameService.GUEST_NAMES),
+            name=guest_name,
             guest_type=guest_type,
-            patience=100.0,
-            satisfaction=50.0,
-            gold_per_tick=guest_data['gold_per_tick'],
-            reputation_bonus=guest_data['reputation_bonus'],
-            stay_duration=guest_data['stay_duration'],
+            patience=patience,
+            satisfaction=satisfaction,
+            gold_per_tick=gold_per_tick,
+            reputation_bonus=reputation_bonus,
+            stay_duration=stay_duration,
             check_in_time=timezone.now()
         )
 
