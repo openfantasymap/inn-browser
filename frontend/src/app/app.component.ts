@@ -429,18 +429,15 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // Ingredient Store methods
   getStoreIngredients(): Ingredient[] {
-    // Only show common and uncommon ingredients in the store
+    // Only show purchasable ingredients in the store (based on backend)
     return this.gameState?.available_ingredients.filter(
-      i => i.rarity === 'common' || i.rarity === 'uncommon'
+      i => i.is_purchasable
     ) || [];
   }
 
   getIngredientPrice(ingredient: Ingredient): number {
-    const prices: { [key: string]: number } = {
-      'common': 5,
-      'uncommon': 15
-    };
-    return prices[ingredient.rarity] || 10;
+    // Use backend market price
+    return ingredient.market_price;
   }
 
   buyIngredient(ingredient: Ingredient, quantity: number): void {

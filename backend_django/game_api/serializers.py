@@ -46,7 +46,8 @@ class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = ['id', 'name', 'rarity', 'description', 'base_drop_chance']
+        fields = ['id', 'name', 'rarity', 'description', 'base_drop_chance',
+                  'is_purchasable', 'market_price']
 
 
 class PlayerRecipeSerializer(serializers.ModelSerializer):

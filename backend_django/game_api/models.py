@@ -348,6 +348,10 @@ class Ingredient(models.Model):
     base_drop_chance = models.FloatField(default=0.1)
     description = models.TextField(blank=True)
 
+    # Market availability and pricing
+    is_purchasable = models.BooleanField(default=False)  # Can be bought in store
+    market_price = models.FloatField(default=0.0)  # Price in gold (0 if not purchasable)
+
     class Meta:
         verbose_name = "Ingredient"
         verbose_name_plural = "Ingredients"

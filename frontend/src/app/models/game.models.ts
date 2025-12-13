@@ -144,6 +144,8 @@ export interface Ingredient {
   rarity: IngredientRarity;
   description: string;
   base_drop_chance: number;
+  is_purchasable: boolean;
+  market_price: number;
 }
 
 export interface ExperimentResult {

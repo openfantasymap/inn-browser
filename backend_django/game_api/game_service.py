@@ -618,16 +618,12 @@ class GameService:
         except Ingredient.DoesNotExist:
             raise ValueError(f"Ingredient {ingredient_id} not found")
 
-        # Only allow purchasing common and uncommon ingredients
-        if ingredient.rarity not in ['common', 'uncommon']:
-            raise ValueError(f"Cannot purchase {ingredient.rarity} ingredients. Only common and uncommon ingredients are available in the store.")
+        # Check if ingredient is purchasable
+        if not ingredient.is_purchasable:
+            raise ValueError(f"{ingredient.name} is not available for purchase. Rare ingredients must be earned through gameplay.")
 
-        # Calculate price based on rarity
-        INGREDIENT_PRICES = {
-            'common': 5.0,
-            'uncommon': 15.0,
-        }
-        price_per_unit = INGREDIENT_PRICES.get(ingredient.rarity, 10.0)
+        # Calculate total cost using backend market price
+        price_per_unit = ingredient.market_price
         total_cost = price_per_unit * quantity
 
         # Check if player has enough gold

@@ -89,13 +89,18 @@
 
           <!-- Level Progress Bar -->
           <div class="level-progress" *ngIf="room.level < 4">
+            <div class="level-progress-header">
+              <span class="progress-label">Level Progress</span>
+              <span class="progress-percentage">{{ getLevelProgress(room.customers_served, room.level) | number:'1.0-0' }}%</span>
+            </div>
             <div class="level-progress-bar">
               <div class="level-progress-fill"
                    [style.width.%]="getLevelProgress(room.customers_served, room.level)">
+                <span class="progress-fill-text">{{ getLevelProgress(room.customers_served, room.level) | number:'1.0-0' }}%</span>
               </div>
             </div>
             <div class="level-progress-text">
-              {{ getLevelProgress(room.customers_served, room.level) | number:'1.0-0' }}% to Lv.{{ room.level + 1 }}
+              {{ room.customers_served }} / {{ getNextLevelThreshold(room.level) }} to Lv.{{ room.level + 1 }}
             </div>
           </div>
           <div class="max-level" *ngIf="room.level >= 4">
@@ -103,9 +108,11 @@
           </div>
 
           <div *ngIf="room.occupied" class="guest-in-room">
-            <div class="guest-info">
-              <span>{{ getGuestTypeDisplay(getGuestInRoom(room.id)?.guest_type || '') }}</span>
-              <span>{{ getGuestInRoom(room.id)?.name }}</span>
+            <div class="guest-info-header">
+              <span class="guest-type-badge">{{ getGuestTypeDisplay(getGuestInRoom(room.id)?.guest_type || '') }}</span>
+            </div>
+            <div class="guest-name-display">
+              {{ getGuestInRoom(room.id)?.name }}
             </div>
             <div class="patience-bar">
               <div class="patience-fill"
