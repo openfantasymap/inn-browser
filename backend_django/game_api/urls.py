@@ -26,4 +26,10 @@ urlpatterns = [
     path('serve-guest/<str:player_id>', views.serve_guest, name='serve_guest'),
     path('purchase-ingredient/<str:player_id>', views.purchase_ingredient, name='purchase_ingredient'),
     path('experiment/<str:player_id>', views.experiment_with_ingredients, name='experiment_ingredients'),
+
+    # Premium/Stripe endpoints
+    path('premium/upgrades/', views.get_premium_upgrades, name='get_premium_upgrades'),
+    path('premium/create-checkout/<str:player_id>', views.create_checkout_session, name='create_checkout_session'),
+    path('premium/webhook/', views.stripe_webhook, name='stripe_webhook'),
+    path('buffs/<str:player_id>', views.get_active_buffs, name='get_active_buffs'),
 ]

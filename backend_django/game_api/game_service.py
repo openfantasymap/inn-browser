@@ -8,7 +8,8 @@ from django.utils import timezone
 from django.db import transaction
 from .models import (
     GameState, Room, Guest, TavernItem, Ingredient,
-    PlayerRecipe, Upgrade, GuestType, RoomTypeTemplate, UpgradeTemplate, RecipeTemplate
+    PlayerRecipe, Upgrade, GuestType, RoomTypeTemplate, UpgradeTemplate, RecipeTemplate,
+    ActiveBuff, PremiumPurchase
 )
 
 
@@ -759,4 +760,177 @@ class GameService:
                 'success': False,
                 'message': 'Error: Recipe data not initialized properly',
                 'game_state': game_state
+            }
+
+    # ========================================================================
+    # BUFF MANAGEMENT
+    # ========================================================================
+
+    @staticmethod
+    def activate_buff(game_state: GameState, upgrade_template: UpgradeTemplate) -> dict:
+        """
+        Activate a temporary buff for a player
+
+        Args:
+            game_state: The player's game state
+            upgrade_template: The upgrade template to activate
+
+        Returns:
+            dict with success status and buff info
+        """
+        # Check if it's actually a temporary buff
+        if upgrade_template.duration_seconds <= 0 and upgrade_template.effect_type != 'instant_clean':
+            return {
+                'success': False,
+                'message': 'This upgrade is not a temporary buff'
+            }
+
+        # Handle instant effects (no duration)
+        if upgrade_template.effect_type == 'instant_clean':
+            # Instantly clean all rooms
+            cleaned_count = 0
+            for room in game_state.rooms.all():
+                if room.cleanliness < 100.0:
+                    room.cleanliness = 100.0
+                    room.save()
+                    cleaned_count += 1
+
+            return {
+                'success': True,
+                'message': f'Instantly cleaned {cleaned_count} rooms to 100%!',
+                'is_instant': True
+            }
+
+        # Create active buff with expiration time
+        expires_at = timezone.now() + timedelta(seconds=upgrade_template.duration_seconds)
+
+        buff = ActiveBuff.objects.create(
+            game_state=game_state,
+            upgrade_template=upgrade_template,
+            expires_at=expires_at,
+            active=True
+        )
+
+        return {
+            'success': True,
+            'message': f'Activated {upgrade_template.name}!',
+            'buff': buff,
+            'expires_at': expires_at
+        }
+
+    @staticmethod
+    def get_active_buffs(game_state: GameState) -> list:
+        """
+        Get all active buffs for a player, cleaning up expired ones
+
+        Args:
+            game_state: The player's game state
+
+        Returns:
+            List of active ActiveBuff objects
+        """
+        # Get all potentially active buffs
+        buffs = ActiveBuff.objects.filter(
+            game_state=game_state,
+            active=True,
+            expires_at__gt=timezone.now()
+        ).select_related('upgrade_template')
+
+        # Mark expired buffs as inactive
+        expired_buffs = ActiveBuff.objects.filter(
+            game_state=game_state,
+            active=True,
+            expires_at__lte=timezone.now()
+        )
+        expired_buffs.update(active=False)
+
+        return list(buffs)
+
+    @staticmethod
+    def calculate_buff_multipliers(game_state: GameState) -> dict:
+        """
+        Calculate all active buff multipliers for a player
+
+        Args:
+            game_state: The player's game state
+
+        Returns:
+            dict with multiplier values for different effects
+        """
+        buffs = GameService.get_active_buffs(game_state)
+
+        multipliers = {
+            'game_speed': 1.0,
+            'income_multiplier': 1.0,
+        }
+
+        for buff in buffs:
+            effect_type = buff.upgrade_template.effect_type
+            effect_value = buff.upgrade_template.effect_value
+
+            if effect_type == 'game_speed':
+                # Speed buffs multiply
+                multipliers['game_speed'] *= effect_value
+            elif effect_type == 'income_multiplier':
+                # Income buffs multiply
+                multipliers['income_multiplier'] *= effect_value
+
+        return multipliers
+
+    @staticmethod
+    def purchase_premium_upgrade(game_state: GameState, upgrade_id: str,
+                                payment_intent_id: str, checkout_session_id: str = '') -> dict:
+        """
+        Purchase a premium upgrade and activate its effects
+
+        Args:
+            game_state: The player's game state
+            upgrade_id: The upgrade template ID
+            payment_intent_id: Stripe payment intent ID
+            checkout_session_id: Stripe checkout session ID (optional)
+
+        Returns:
+            dict with success status and purchase info
+        """
+        try:
+            upgrade_template = UpgradeTemplate.objects.get(upgrade_id=upgrade_id)
+        except UpgradeTemplate.DoesNotExist:
+            return {
+                'success': False,
+                'message': f'Upgrade {upgrade_id} not found'
+            }
+
+        # Verify it's a premium upgrade
+        if not upgrade_template.is_premium:
+            return {
+                'success': False,
+                'message': 'This upgrade is not a premium item'
+            }
+
+        # Create purchase record
+        purchase = PremiumPurchase.objects.create(
+            game_state=game_state,
+            upgrade_template=upgrade_template,
+            stripe_payment_intent_id=payment_intent_id,
+            stripe_checkout_session_id=checkout_session_id,
+            amount_cents=upgrade_template.premium_price_cents,
+            status='completed',  # Assume completed since we're calling after payment success
+            completed_at=timezone.now()
+        )
+
+        # Activate the buff
+        activation_result = GameService.activate_buff(game_state, upgrade_template)
+
+        if activation_result['success']:
+            return {
+                'success': True,
+                'message': f'Successfully purchased and activated {upgrade_template.name}!',
+                'purchase': purchase,
+                'activation': activation_result
+            }
+        else:
+            return {
+                'success': False,
+                'message': f'Purchase recorded but activation failed: {activation_result["message"]}',
+                'purchase': purchase
             }

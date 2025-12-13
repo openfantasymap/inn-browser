@@ -112,3 +112,20 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
     ],
 }
+
+# ============================================================================
+# STRIPE CONFIGURATION
+# ============================================================================
+# Get from environment variables or use test keys for development
+STRIPE_SECRET_KEY = os.environ.get(
+    'STRIPE_SECRET_KEY',
+    'sk_test_51234567890abcdefghijklmnopqrstuvwxyz'  # Replace with your test key
+)
+STRIPE_PUBLISHABLE_KEY = os.environ.get(
+    'STRIPE_PUBLISHABLE_KEY',
+    'pk_test_51234567890abcdefghijklmnopqrstuvwxyz'  # Replace with your test key
+)
+STRIPE_WEBHOOK_SECRET = os.environ.get(
+    'STRIPE_WEBHOOK_SECRET',
+    ''  # Optional for development, required for production
+)

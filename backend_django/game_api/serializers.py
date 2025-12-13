@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import GameState, Room, Guest, TavernItem, Ingredient, PlayerRecipe, Upgrade, UpgradeTemplate
+from .models import (
+    GameState, Room, Guest, TavernItem, Ingredient, PlayerRecipe, Upgrade, UpgradeTemplate,
+    ActiveBuff, PremiumPurchase
+)
 
 
 class RoomSerializer(serializers.ModelSerializer):
@@ -62,6 +65,44 @@ class PlayerRecipeSerializer(serializers.ModelSerializer):
                   'times_crafted', 'discovered_at', 'unlocked_at']
 
 
+class ActiveBuffSerializer(serializers.ModelSerializer):
+    """Serializer for ActiveBuff model"""
+    upgrade_id = serializers.CharField(source='upgrade_template.upgrade_id', read_only=True)
+    name = serializers.CharField(source='upgrade_template.name', read_only=True)
+    effect_type = serializers.CharField(source='upgrade_template.effect_type', read_only=True)
+    effect_value = serializers.FloatField(source='upgrade_template.effect_value', read_only=True)
+    time_remaining_seconds = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ActiveBuff
+        fields = ['id', 'upgrade_id', 'name', 'effect_type', 'effect_value',
+                  'activated_at', 'expires_at', 'time_remaining_seconds']
+
+    def get_time_remaining_seconds(self, obj):
+        """Calculate seconds remaining until buff expires"""
+        from django.utils import timezone
+        if obj.is_expired():
+            return 0
+        remaining = obj.expires_at - timezone.now()
+        return max(0, int(remaining.total_seconds()))
+
+
+class PremiumPurchaseSerializer(serializers.ModelSerializer):
+    """Serializer for PremiumPurchase model"""
+    upgrade_id = serializers.CharField(source='upgrade_template.upgrade_id', read_only=True)
+    upgrade_name = serializers.CharField(source='upgrade_template.name', read_only=True)
+    amount_usd = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PremiumPurchase
+        fields = ['id', 'upgrade_id', 'upgrade_name', 'amount_cents', 'amount_usd',
+                  'currency', 'status', 'created_at', 'completed_at']
+
+    def get_amount_usd(self, obj):
+        """Convert cents to dollars"""
+        return obj.amount_cents / 100
+
+
 class UpgradeTemplateSerializer(serializers.Serializer):
     """Serializer for UpgradeTemplate with purchase status"""
     id = serializers.CharField(source='upgrade_id', read_only=True)
@@ -73,6 +114,17 @@ class UpgradeTemplateSerializer(serializers.Serializer):
     purchased = serializers.BooleanField(read_only=True)
     purchased_at = serializers.DateTimeField(read_only=True, allow_null=True)
 
+    # Premium fields
+    is_premium = serializers.BooleanField(read_only=True)
+    premium_price_cents = serializers.IntegerField(read_only=True)
+    premium_price_usd = serializers.SerializerMethodField()
+    duration_seconds = serializers.IntegerField(read_only=True)
+    is_consumable = serializers.BooleanField(read_only=True)
+
+    def get_premium_price_usd(self, obj):
+        """Convert cents to dollars"""
+        return obj.premium_price_cents / 100 if hasattr(obj, 'premium_price_cents') else 0
+
 
 class GameStateSerializer(serializers.ModelSerializer):
     """Serializer for GameState model"""
@@ -80,6 +132,11 @@ class GameStateSerializer(serializers.ModelSerializer):
     guests = GuestSerializer(many=True, read_only=True)
     upgrades = serializers.SerializerMethodField()  # Return all templates with purchase status
     recipes = serializers.SerializerMethodField()  # Changed to use player_recipes
+
+    # Premium/buff fields
+    active_buffs = serializers.SerializerMethodField()
+    buff_multipliers = serializers.SerializerMethodField()
+    premium_upgrades = serializers.SerializerMethodField()
 
     # Angular expects these field names
     tavern_items = serializers.SerializerMethodField()
@@ -95,7 +152,8 @@ class GameStateSerializer(serializers.ModelSerializer):
                   'total_income_multiplier', 'auto_clean_enabled',
                   'game_speed', 'last_update', 'tavern_unlocked',
                   'tavern_items', 'inventory', 'available_ingredients',
-                  'location', 'offline_progress', 'max_offline_hours']
+                  'location', 'offline_progress', 'max_offline_hours',
+                  'active_buffs', 'buff_multipliers', 'premium_upgrades']
 
     def get_resources(self, obj):
         """Get resources in the format expected by Angular frontend"""
@@ -140,9 +198,40 @@ class GameStateSerializer(serializers.ModelSerializer):
         player_recipes = obj.player_recipes.all()
         return PlayerRecipeSerializer(player_recipes, many=True).data
 
+    def get_active_buffs(self, obj):
+        """Get active temporary buffs"""
+        from game_api.game_service import GameService
+        buffs = GameService.get_active_buffs(obj)
+        return ActiveBuffSerializer(buffs, many=True).data
+
+    def get_buff_multipliers(self, obj):
+        """Get calculated buff multipliers"""
+        from game_api.game_service import GameService
+        return GameService.calculate_buff_multipliers(obj)
+
+    def get_premium_upgrades(self, obj):
+        """Get all premium upgrade templates (purchasable with real money)"""
+        premium_templates = UpgradeTemplate.objects.filter(is_premium=True)
+        premium_data = []
+
+        for template in premium_templates:
+            premium_data.append({
+                'upgrade_id': template.upgrade_id,
+                'name': template.name,
+                'description': template.description,
+                'premium_price_cents': template.premium_price_cents,
+                'premium_price_usd': template.premium_price_cents / 100,
+                'effect_type': template.effect_type,
+                'effect_value': template.effect_value,
+                'duration_seconds': template.duration_seconds,
+                'is_consumable': template.is_consumable
+            })
+
+        return premium_data
+
     def get_upgrades(self, obj):
-        """Get all upgrade templates with purchase status for this player"""
-        all_templates = UpgradeTemplate.objects.all()
+        """Get all upgrade templates with purchase status for this player (non-premium only)"""
+        all_templates = UpgradeTemplate.objects.filter(is_premium=False)
         upgrades_data = []
 
         for template in all_templates:
@@ -157,7 +246,11 @@ class GameStateSerializer(serializers.ModelSerializer):
                 'effect_type': template.effect_type,
                 'effect_value': template.effect_value,
                 'purchased': purchase is not None,
-                'purchased_at': purchase.purchased_at if purchase else None
+                'purchased_at': purchase.purchased_at if purchase else None,
+                'is_premium': template.is_premium,
+                'premium_price_cents': template.premium_price_cents,
+                'duration_seconds': template.duration_seconds,
+                'is_consumable': template.is_consumable
             })
 
         return upgrades_data

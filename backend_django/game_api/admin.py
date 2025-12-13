@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
     GameState, Room, Guest, TavernItem, Ingredient, PlayerRecipe, Upgrade,
-    RoomTypeTemplate, UpgradeTemplate, RecipeTemplate
+    RoomTypeTemplate, UpgradeTemplate, RecipeTemplate, ActiveBuff, PremiumPurchase
 )
 
 
@@ -228,6 +228,109 @@ class UpgradeAdmin(admin.ModelAdmin):
     effect_type_display.short_description = 'Effect Type'
 
 
+@admin.register(ActiveBuff)
+class ActiveBuffAdmin(admin.ModelAdmin):
+    list_display = ['id', 'game_state', 'buff_name', 'activated_at', 'expires_at',
+                    'status_display', 'time_remaining_display']
+    list_filter = ['active', 'upgrade_template', 'game_state']
+    search_fields = ['game_state__player_id', 'upgrade_template__name']
+    readonly_fields = ['activated_at', 'is_expired']
+    ordering = ['-activated_at']
+
+    fieldsets = (
+        ('Buff Info', {
+            'fields': ('game_state', 'upgrade_template')
+        }),
+        ('Timing', {
+            'fields': ('activated_at', 'expires_at')
+        }),
+        ('Status', {
+            'fields': ('active', 'is_expired')
+        }),
+    )
+
+    def buff_name(self, obj):
+        return obj.upgrade_template.name
+    buff_name.short_description = 'Buff'
+
+    def status_display(self, obj):
+        if not obj.active:
+            return format_html('<span style="color: gray;">⏸️ Deactivated</span>')
+        if obj.is_expired():
+            return format_html('<span style="color: red;">⌛ Expired</span>')
+        return format_html('<span style="color: green;">✓ Active</span>')
+    status_display.short_description = 'Status'
+
+    def time_remaining_display(self, obj):
+        if obj.is_expired():
+            return format_html('<span style="color: gray;">—</span>')
+        from django.utils import timezone
+        remaining = obj.expires_at - timezone.now()
+        total_seconds = int(remaining.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        if hours > 0:
+            return format_html('<span style="color: orange;">{} h {} min</span>', hours, minutes)
+        return format_html('<span style="color: orange;">{} min</span>', minutes)
+    time_remaining_display.short_description = 'Time Left'
+
+
+@admin.register(PremiumPurchase)
+class PremiumPurchaseAdmin(admin.ModelAdmin):
+    list_display = ['id', 'game_state', 'purchase_name', 'amount_display',
+                    'status_display', 'created_at', 'stripe_payment_intent_id']
+    list_filter = ['status', 'upgrade_template', 'created_at']
+    search_fields = ['game_state__player_id', 'stripe_payment_intent_id',
+                     'stripe_checkout_session_id', 'upgrade_template__name']
+    readonly_fields = ['created_at', 'completed_at', 'stripe_payment_intent_id',
+                       'stripe_checkout_session_id']
+    ordering = ['-created_at']
+
+    fieldsets = (
+        ('Purchase Info', {
+            'fields': ('game_state', 'upgrade_template', 'status')
+        }),
+        ('Payment Details', {
+            'fields': ('amount_cents', 'currency', 'stripe_payment_intent_id',
+                      'stripe_checkout_session_id')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'completed_at')
+        }),
+        ('Metadata', {
+            'fields': ('metadata',),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def purchase_name(self, obj):
+        return obj.upgrade_template.name
+    purchase_name.short_description = 'Item'
+
+    def amount_display(self, obj):
+        return format_html('<strong>${:.2f}</strong> {}', obj.amount_cents / 100, obj.currency.upper())
+    amount_display.short_description = 'Amount'
+
+    def status_display(self, obj):
+        colors = {
+            'pending': 'orange',
+            'completed': 'green',
+            'failed': 'red',
+            'refunded': 'gray'
+        }
+        icons = {
+            'pending': '⏳',
+            'completed': '✓',
+            'failed': '✗',
+            'refunded': '↩️'
+        }
+        color = colors.get(obj.status, 'black')
+        icon = icons.get(obj.status, '?')
+        return format_html('<span style="color: {};">{} {}</span>',
+                          color, icon, obj.get_status_display())
+    status_display.short_description = 'Status'
+
+
 # ============================================================================
 # TEMPLATE ADMIN - Global templates shared across all players
 # ============================================================================
@@ -271,10 +374,11 @@ class RoomTypeTemplateAdmin(admin.ModelAdmin):
 
 @admin.register(UpgradeTemplate)
 class UpgradeTemplateAdmin(admin.ModelAdmin):
-    list_display = ['upgrade_id', 'name', 'cost', 'effect_display', 'instance_count']
-    list_filter = ['effect_type']
+    list_display = ['upgrade_id', 'name', 'type_display', 'cost_display', 'effect_display',
+                    'duration_display', 'instance_count']
+    list_filter = ['effect_type', 'is_premium', 'is_consumable']
     search_fields = ['name', 'upgrade_id', 'description']
-    ordering = ['cost']
+    ordering = ['cost', 'premium_price_cents']
 
     fieldsets = (
         ('Basic Info', {
@@ -283,16 +387,46 @@ class UpgradeTemplateAdmin(admin.ModelAdmin):
         ('Cost & Effects', {
             'fields': ('cost', 'effect_type', 'effect_value')
         }),
+        ('Premium/Monetization', {
+            'fields': ('is_premium', 'premium_price_cents', 'is_consumable'),
+            'description': 'Set is_premium=True for real money purchases. Price in cents (e.g., 99 = $0.99)'
+        }),
+        ('Temporary Buffs', {
+            'fields': ('duration_seconds',),
+            'description': 'Duration in seconds. 0 = permanent, >0 = temporary buff'
+        }),
         ('Requirements', {
             'fields': ('required_upgrade',),
             'classes': ('collapse',)
         }),
     )
 
+    def type_display(self, obj):
+        if obj.is_premium:
+            return format_html('<span style="color: gold; font-weight: bold;">💎 PREMIUM</span>')
+        return format_html('<span style="color: green;">💰 Gold</span>')
+    type_display.short_description = 'Type'
+
+    def cost_display(self, obj):
+        if obj.is_premium:
+            return format_html('<strong>${:.2f}</strong>', obj.premium_price_cents / 100)
+        return format_html('{:.0f}g', obj.cost)
+    cost_display.short_description = 'Cost'
+
     def effect_display(self, obj):
         return format_html('<code>{}:</code> <strong>{}</strong>',
                           obj.effect_type, obj.effect_value)
     effect_display.short_description = 'Effect'
+
+    def duration_display(self, obj):
+        if obj.duration_seconds == 0:
+            return format_html('<span style="color: green;">♾️ Permanent</span>')
+        hours = obj.duration_seconds / 3600
+        if hours >= 1:
+            return format_html('<span style="color: orange;">⏱️ {:.1f}h</span>', hours)
+        minutes = obj.duration_seconds / 60
+        return format_html('<span style="color: orange;">⏱️ {:.0f}m</span>', minutes)
+    duration_display.short_description = 'Duration'
 
     def instance_count(self, obj):
         purchased = obj.player_purchases.count()

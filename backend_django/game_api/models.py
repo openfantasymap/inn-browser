@@ -142,9 +142,17 @@ class UpgradeTemplate(models.Model):
     description = models.TextField()
 
     # Cost and effects
-    cost = models.FloatField(default=0.0)
+    cost = models.FloatField(default=0.0)  # Cost in gold (for free upgrades)
     effect_type = models.CharField(max_length=50)
     effect_value = models.FloatField(default=0.0)
+
+    # Premium/monetization fields
+    is_premium = models.BooleanField(default=False)  # Requires real money purchase
+    premium_price_cents = models.IntegerField(default=0)  # Price in USD cents (e.g., 99 = $0.99)
+
+    # Temporary buff fields
+    duration_seconds = models.IntegerField(default=0)  # 0 = permanent, >0 = temporary buff
+    is_consumable = models.BooleanField(default=False)  # Can be purchased multiple times
 
     # Requirements (optional)
     required_upgrade = models.ForeignKey(
@@ -161,7 +169,9 @@ class UpgradeTemplate(models.Model):
         ordering = ['cost']
 
     def __str__(self):
-        return f"{self.name} (${self.cost:.0f})"
+        if self.is_premium:
+            return f"{self.name} (${self.premium_price_cents/100:.2f})"
+        return f"{self.name} ({self.cost:.0f}g)"
 
 
 class RecipeTemplate(models.Model):
@@ -233,6 +243,76 @@ class GameState(models.Model):
 
     def __str__(self):
         return f"Game State: {self.player_id} (Gold: {self.gold:.0f})"
+
+
+class ActiveBuff(models.Model):
+    """Active temporary buffs on a player's game state"""
+    game_state = models.ForeignKey(GameState, on_delete=models.CASCADE, related_name='active_buffs')
+    upgrade_template = models.ForeignKey(UpgradeTemplate, on_delete=models.PROTECT, related_name='active_instances')
+
+    # Timing
+    activated_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField()  # When the buff expires
+
+    # Status
+    active = models.BooleanField(default=True)  # False if manually deactivated or expired
+
+    class Meta:
+        verbose_name = "Active Buff"
+        verbose_name_plural = "Active Buffs"
+        ordering = ['-activated_at']
+        indexes = [
+            models.Index(fields=['game_state', 'active', 'expires_at']),
+        ]
+
+    def is_expired(self):
+        """Check if buff has expired"""
+        return timezone.now() >= self.expires_at
+
+    def __str__(self):
+        status = "Active" if self.active and not self.is_expired() else "Expired"
+        return f"{status}: {self.upgrade_template.name} for {self.game_state.player_id}"
+
+
+class PremiumPurchase(models.Model):
+    """Track real money purchases via Stripe"""
+
+    class PurchaseStatus(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        COMPLETED = 'completed', 'Completed'
+        FAILED = 'failed', 'Failed'
+        REFUNDED = 'refunded', 'Refunded'
+
+    game_state = models.ForeignKey(GameState, on_delete=models.CASCADE, related_name='premium_purchases')
+    upgrade_template = models.ForeignKey(UpgradeTemplate, on_delete=models.PROTECT, related_name='purchases')
+
+    # Stripe info
+    stripe_payment_intent_id = models.CharField(max_length=200, unique=True, db_index=True)
+    stripe_checkout_session_id = models.CharField(max_length=200, blank=True, default='')
+
+    # Purchase details
+    amount_cents = models.IntegerField()  # Amount in cents
+    currency = models.CharField(max_length=3, default='usd')
+    status = models.CharField(max_length=20, choices=PurchaseStatus.choices, default=PurchaseStatus.PENDING)
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    # Metadata
+    metadata = models.JSONField(default=dict, blank=True)  # For storing extra info
+
+    class Meta:
+        verbose_name = "Premium Purchase"
+        verbose_name_plural = "Premium Purchases"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['stripe_payment_intent_id']),
+            models.Index(fields=['game_state', 'status']),
+        ]
+
+    def __str__(self):
+        return f"{self.game_state.player_id} - {self.upgrade_template.name} (${self.amount_cents/100:.2f}) - {self.status}"
 
 
 class Room(models.Model):
