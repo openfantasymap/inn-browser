@@ -16,6 +16,9 @@ export class AppComponent implements OnInit, OnDestroy {
   selectedGuest: Guest | null = null;
   RoomType = RoomType;
 
+  // Tab state
+  activeTab: 'inn' | 'tavern' = 'inn';
+
   // Drag and drop state
   draggedGuest: Guest | null = null;
   dragOverRoomId: string | null = null;
@@ -37,6 +40,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   startNewGame(): void {
     this.gameService.startNewGame().subscribe();
+  }
+
+  switchTab(tab: 'inn' | 'tavern'): void {
+    this.activeTab = tab;
   }
 
   assignGuestToRoom(guest: Guest, room: Room): void {

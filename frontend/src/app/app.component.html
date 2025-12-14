@@ -50,8 +50,22 @@
     </div>
   </div>
 
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button class="tab-button"
+            [class.active]="activeTab === 'inn'"
+            (click)="switchTab('inn')">
+      🏠 Inn Management
+    </button>
+    <button class="tab-button"
+            [class.active]="activeTab === 'tavern'"
+            (click)="switchTab('tavern')">
+      🍽️ Tavern & Crafting
+    </button>
+  </div>
+
   <!-- Main Game Area -->
-  <div class="game-content">
+  <div class="game-content" *ngIf="activeTab === 'inn'">
     <!-- Rooms Section -->
     <div class="rooms-section">
       <h2>🏠 Rooms</h2>
@@ -240,9 +254,14 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
 
+  <!-- Tavern & Crafting Tab -->
+  <div class="game-content tavern-content" *ngIf="activeTab === 'tavern'">
+    <div class="tavern-panel">
       <!-- Ingredient Store -->
-      <div class="tavern-section" *ngIf="gameState.tavern_unlocked">
+      <div class="tavern-section">
         <h2>🏪 Ingredient Store</h2>
         <p class="store-description">Purchase common and uncommon ingredients for your recipes!</p>
 
@@ -277,12 +296,12 @@
         </div>
 
         <p *ngIf="getStoreIngredients().length === 0" class="empty-message">
-          Store is currently closed. Unlock the tavern first!
+          No ingredients available for purchase at the moment.
         </p>
       </div>
 
       <!-- Recipe Discovery (Tavern) -->
-      <div class="tavern-section" *ngIf="gameState.tavern_unlocked">
+      <div class="tavern-section">
         <h2>🧪 Recipe Experimentation</h2>
 
         <!-- Ingredient Inventory -->
@@ -364,7 +383,7 @@
       </div>
 
       <!-- Tavern Management -->
-      <div class="tavern-management" *ngIf="gameState.tavern_unlocked">
+      <div class="tavern-management">
         <h2>🍽️ Tavern Management</h2>
 
         <!-- Item Inventory -->
