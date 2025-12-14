@@ -216,6 +216,7 @@ class GameStateSerializer(serializers.ModelSerializer):
 
         for template in premium_templates:
             premium_data.append({
+                'id': template.upgrade_id,  # Frontend expects 'id'
                 'upgrade_id': template.upgrade_id,
                 'name': template.name,
                 'description': template.description,
@@ -239,6 +240,7 @@ class GameStateSerializer(serializers.ModelSerializer):
             purchase = obj.purchased_upgrades.filter(upgrade_template=template).first()
 
             upgrades_data.append({
+                'id': template.upgrade_id,  # Frontend expects 'id'
                 'upgrade_id': template.upgrade_id,
                 'name': template.name,
                 'description': template.description,
