@@ -19,6 +19,9 @@ export class AppComponent implements OnInit, OnDestroy {
   // Tab state
   activeTab: 'inn' | 'tavern' = 'inn';
 
+  // Offline notification state
+  offlineNotificationDismissed: boolean = false;
+
   // Drag and drop state
   draggedGuest: Guest | null = null;
   dragOverRoomId: string | null = null;
@@ -44,6 +47,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   switchTab(tab: 'inn' | 'tavern'): void {
     this.activeTab = tab;
+  }
+
+  dismissOfflineNotification(): void {
+    this.offlineNotificationDismissed = true;
   }
 
   assignGuestToRoom(guest: Guest, room: Room): void {

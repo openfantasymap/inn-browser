@@ -40,13 +40,16 @@
   </div>
 
   <!-- Offline Earnings Notification -->
-  <div class="offline-earnings" *ngIf="gameState.offline_progress.earnings > 0">
+  <div class="offline-earnings" *ngIf="gameState.offline_progress.earnings > 0 && !offlineNotificationDismissed">
     <div class="notification">
       <span class="notification-icon">💤</span>
       <span class="notification-text">
         Welcome back! You earned <strong>{{ gameState.offline_progress.earnings | number:'1.0-0' }}</strong> gold
         while offline for <strong>{{ gameState.offline_progress.hours | number:'1.0-1' }}</strong> hours!
       </span>
+      <button class="notification-close" (click)="dismissOfflineNotification()" title="Dismiss">
+        ✕
+      </button>
     </div>
   </div>
 
