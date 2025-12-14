@@ -81,15 +81,15 @@ class RoomAdmin(admin.ModelAdmin):
 
 @admin.register(Guest)
 class GuestAdmin(admin.ModelAdmin):
-    list_display = ['name', 'guest_type', 'game_state', 'room', 'patience_display',
+    list_display = ['name', 'species_display', 'guest_type', 'game_state', 'room', 'patience_display',
                     'satisfaction_display', 'gold_per_tick', 'fed_display', 'served_drink_display']
-    list_filter = ['guest_type', 'fed', 'served_drink', 'game_state']
+    list_filter = ['guest_type', 'species', 'fed', 'served_drink', 'game_state']
     search_fields = ['name', 'game_state__player_id']
     readonly_fields = ['created_at', 'check_in_time']
 
     fieldsets = (
         ('Basic Info', {
-            'fields': ('game_state', 'room', 'name', 'guest_type')
+            'fields': ('game_state', 'room', 'name', 'guest_type', 'species')
         }),
         ('Stats', {
             'fields': ('patience', 'satisfaction', 'gold_per_tick', 'reputation_bonus', 'stay_duration')
@@ -127,6 +127,10 @@ class GuestAdmin(admin.ModelAdmin):
     def served_drink_display(self, obj):
         return '🍺' if obj.served_drink else '❌'
     served_drink_display.short_description = 'Drink'
+
+    def species_display(self, obj):
+        return obj.get_species_display()
+    species_display.short_description = 'Species'
 
 
 @admin.register(TavernItem)

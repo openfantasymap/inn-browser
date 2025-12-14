@@ -23,12 +23,13 @@ class LLMService:
                 api_key=self.api_key,
             )
 
-    def generate_guest_stats(self, guest_type: str, name: str) -> Optional[Dict]:
+    def generate_guest_stats(self, guest_type: str, species: str, name: str) -> Optional[Dict]:
         """
-        Generate guest stats using LLM based on guest type and name
+        Generate guest stats using LLM based on guest type, species, and name
 
         Args:
             guest_type: Type of guest (peasant, wizard, knight, etc.)
+            species: Species/race (human, elf, dwarf, tiefling, etc.)
             name: Generated name for the guest
 
         Returns:
@@ -58,8 +59,18 @@ class LLMService:
         prompt = f"""Generate stats for a fantasy inn guest. Return ONLY a valid JSON object, no other text.
 
 Guest Name: {name}
+Species/Race: {species}
 Guest Type: {guest_type}
 Profile: {profile}
+
+Consider species traits:
+- Elves: Generally patient, graceful, may live longer and have different values
+- Dwarves: Sturdy, might drink more, value craftsmanship
+- Halflings: Friendly, good-natured, modest wealth
+- Tieflings: Exotic, may face prejudice, varied backgrounds
+- Dragonborn: Proud, honorable, commanding presence
+- Tabaxi: Curious, playful, loves shiny things
+- And adapt other species appropriately based on their lore
 
 Generate realistic stats as a JSON object with these exact fields:
 {{
@@ -125,12 +136,13 @@ Return ONLY the JSON object."""
             print(f"LLM guest generation failed: {str(e)}")
             return None
 
-    def generate_guest_name(self, guest_type: str) -> Optional[str]:
+    def generate_guest_name(self, guest_type: str, species: str) -> Optional[str]:
         """
-        Generate a contextually appropriate name for a guest type
+        Generate a contextually appropriate name for a guest type and species
 
         Args:
             guest_type: Type of guest
+            species: Species/race of the guest
 
         Returns:
             Generated name or None if generation fails
@@ -155,17 +167,42 @@ Return ONLY the JSON object."""
 
         hint = type_hints.get(guest_type, 'fantasy-themed names')
 
-        prompt = f"""Generate ONE fantasy name for a {guest_type}.
+        # Species-specific naming guidance
+        species_guidance = {
+            'elf': 'Elegant, flowing, often with apostrophes (Aer\'ethil, Silv\'ara)',
+            'high_elf': 'Sophisticated, musical (Aelindra, Thalion)',
+            'wood_elf': 'Nature-themed (Thornleaf, Willowbreeze)',
+            'drow': 'Dark, harsh sounds (Drizzt, Malice, Zaknafein)',
+            'dwarf': 'Strong consonants, often -in or -im endings (Thorin, Gimli, Balin)',
+            'halfling': 'Friendly, simple (Bilbo, Pippin, Rosie)',
+            'gnome': 'Clever, whimsical (Fizzbang, Tinkerwhistle)',
+            'tiefling': 'Infernal or virtue names (Crimson, Sorrow, Zariel)',
+            'dragonborn': 'Draconic, hard sounds (Kriv, Balasar, Medrash)',
+            'tabaxi': 'Descriptive phrases (Cloud-Chaser, Soft-Paws)',
+            'kenku': 'Mimicked sounds (Whistler, Caw, Echo)',
+            'lizardfolk': 'Sibilant, hissing (Sessessix, Susk)',
+            'orc': 'Harsh, guttural (Grom, Thrall, Durotan)',
+            'goblin': 'Sharp, quick syllables (Grub, Snitch, Bogg)',
+            'fairy': 'Delicate, nature-inspired (Dewdrop, Moonbeam)',
+            'daemon': 'Dark, powerful (Azrazel, Malphas)',
+            'katari': 'Feline, purring sounds (Mreow, Purrnash)',
+            'fungril': 'Earthy, spore-like (Sporix, Mycel)',
+        }
 
-Style: {hint}
+        species_hint = species_guidance.get(species.lower(), f'{species} themed')
+
+        prompt = f"""Generate ONE fantasy name for a {species} {guest_type}.
+
+Character Style: {hint}
+Species Naming: {species_hint}
 
 Requirements:
 - Single name only (first name or moniker)
 - No title or honorific
-- Should fit the {guest_type} archetype
+- Should fit BOTH the {species} species AND {guest_type} archetype
 - Return ONLY the name, nothing else
 
-Example responses: "Aldric", "Mystara", "Thornblade", "Elara"
+Example responses: "Aldric", "Thal'endor", "Thornbeard", "Swift-Paw"
 
 Generate the name:"""
 

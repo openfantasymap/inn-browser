@@ -79,6 +79,115 @@ class GuestType(models.TextChoices):
     GHOST = 'ghost', 'Ghost'
 
 
+class GuestSpecies(models.TextChoices):
+    """Guest species/races from Faerun (D&D) and Daggerheart"""
+
+    # ========================================================================
+    # COMMON RACES (appear frequently)
+    # ========================================================================
+    HUMAN = 'human', 'Human'
+    ELF = 'elf', 'Elf'
+    DWARF = 'dwarf', 'Dwarf'
+    HALFLING = 'halfling', 'Halfling'
+    GNOME = 'gnome', 'Gnome'
+    HALF_ELF = 'half_elf', 'Half-Elf'
+    HALF_ORC = 'half_orc', 'Half-Orc'
+    ORC = 'orc', 'Orc'
+
+    # ========================================================================
+    # FAERUN RACES (D&D Forgotten Realms)
+    # ========================================================================
+
+    # Elven subraces
+    HIGH_ELF = 'high_elf', 'High Elf'
+    WOOD_ELF = 'wood_elf', 'Wood Elf'
+    DROW = 'drow', 'Drow (Dark Elf)'
+    ELADRIN = 'eladrin', 'Eladrin'
+    SEA_ELF = 'sea_elf', 'Sea Elf'
+
+    # Dwarven subraces
+    MOUNTAIN_DWARF = 'mountain_dwarf', 'Mountain Dwarf'
+    HILL_DWARF = 'hill_dwarf', 'Hill Dwarf'
+    DUERGAR = 'duergar', 'Duergar (Gray Dwarf)'
+
+    # Halfling subraces
+    LIGHTFOOT_HALFLING = 'lightfoot_halfling', 'Lightfoot Halfling'
+    STOUT_HALFLING = 'stout_halfling', 'Stout Halfling'
+    GHOSTWISE_HALFLING = 'ghostwise_halfling', 'Ghostwise Halfling'
+
+    # Gnome subraces
+    ROCK_GNOME = 'rock_gnome', 'Rock Gnome'
+    FOREST_GNOME = 'forest_gnome', 'Forest Gnome'
+    DEEP_GNOME = 'deep_gnome', 'Deep Gnome (Svirfneblin)'
+
+    # Exotic D&D races
+    DRAGONBORN = 'dragonborn', 'Dragonborn'
+    TIEFLING = 'tiefling', 'Tiefling'
+    AASIMAR = 'aasimar', 'Aasimar'
+    GOLIATH = 'goliath', 'Goliath'
+    FIRBOLG = 'firbolg', 'Firbolg'
+    KENKU = 'kenku', 'Kenku'
+    TABAXI = 'tabaxi', 'Tabaxi'
+    TORTLE = 'tortle', 'Tortle'
+    LIZARDFOLK = 'lizardfolk', 'Lizardfolk'
+    AARAKOCRA = 'aarakocra', 'Aarakocra'
+    TRITON = 'triton', 'Triton'
+    WARFORGED = 'warforged', 'Warforged'
+    CHANGELING = 'changeling', 'Changeling'
+    KALASHTAR = 'kalashtar', 'Kalashtar'
+    SHIFTER = 'shifter', 'Shifter'
+    YUAN_TI_PUREBLOOD = 'yuan_ti_pureblood', 'Yuan-ti Pureblood'
+
+    # Genasi (elemental-touched)
+    FIRE_GENASI = 'fire_genasi', 'Fire Genasi'
+    WATER_GENASI = 'water_genasi', 'Water Genasi'
+    AIR_GENASI = 'air_genasi', 'Air Genasi'
+    EARTH_GENASI = 'earth_genasi', 'Earth Genasi'
+
+    # Monstrous races
+    GOBLIN = 'goblin', 'Goblin'
+    HOBGOBLIN = 'hobgoblin', 'Hobgoblin'
+    BUGBEAR = 'bugbear', 'Bugbear'
+    KOBOLD = 'kobold', 'Kobold'
+    MINOTAUR = 'minotaur', 'Minotaur'
+    CENTAUR = 'centaur', 'Centaur'
+    SATYR = 'satyr', 'Satyr'
+    HARENGON = 'harengon', 'Harengon (Rabbitfolk)'
+    OWLIN = 'owlin', 'Owlin'
+    FAIRY = 'fairy', 'Fairy'
+
+    # ========================================================================
+    # DAGGERHEART RACES (Critical Role)
+    # ========================================================================
+    FAERIE = 'faerie', 'Faerie'  # Daggerheart fey
+    DAEMON = 'daemon', 'Daemon'  # Daggerheart demon-touched
+    DRAKONA = 'drakona', 'Drakona'  # Daggerheart dragonborn
+    CLANK = 'clank', 'Clank'  # Daggerheart construct/robot
+    GALAPA = 'galapa', 'Galapa'  # Daggerheart turtle people
+    RIBBET = 'ribbet', 'Ribbet'  # Daggerheart frog people
+    SIMIAH = 'simiah', 'Simiah'  # Daggerheart ape people
+    INFERIS = 'inferis', 'Inferis'  # Daggerheart infernal
+    KATARI = 'katari', 'Katari'  # Daggerheart cat people
+    FUNGRIL = 'fungril', 'Fungril'  # Daggerheart mushroom people
+
+    # ========================================================================
+    # RARE/LEGENDARY SPECIES
+    # ========================================================================
+    DRAGON = 'dragon', 'Dragon (Polymorphed)'
+    VAMPIRE = 'vampire', 'Vampire'
+    LYCANTHROPE = 'lycanthrope', 'Lycanthrope'
+    LICH = 'lich', 'Lich'
+    REVENANT = 'revenant', 'Revenant'
+    GITHYANKI = 'githyanki', 'Githyanki'
+    GITHZERAI = 'githzerai', 'Githzerai'
+    MODRON = 'modron', 'Modron'
+    PLASMOID = 'plasmoid', 'Plasmoid'
+    AUTOGNOME = 'autognome', 'Autognome'
+    HADOZEE = 'hadozee', 'Hadozee'
+    THRI_KREEN = 'thri_kreen', 'Thri-kreen'
+    GIFF = 'giff', 'Giff'
+
+
 class ItemType(models.TextChoices):
     FOOD = 'food', 'Food'
     BEVERAGE = 'beverage', 'Beverage'
@@ -368,6 +477,7 @@ class Guest(models.Model):
 
     name = models.CharField(max_length=100)
     guest_type = models.CharField(max_length=20, choices=GuestType.choices)
+    species = models.CharField(max_length=30, choices=GuestSpecies.choices, default=GuestSpecies.HUMAN)
 
     # Stats
     patience = models.FloatField(default=100.0)

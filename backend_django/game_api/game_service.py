@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.db import transaction
 from .models import (
     GameState, Room, Guest, TavernItem, Ingredient,
-    PlayerRecipe, Upgrade, GuestType, RoomTypeTemplate, UpgradeTemplate, RecipeTemplate,
+    PlayerRecipe, Upgrade, GuestType, GuestSpecies, RoomTypeTemplate, UpgradeTemplate, RecipeTemplate,
     ActiveBuff, PremiumPurchase
 )
 from .llm_service import get_llm_service
@@ -268,7 +268,7 @@ class GameService:
 
     @staticmethod
     def _try_spawn_guest(game_state: GameState):
-        """Try to spawn a new guest to the waiting list (with LLM-generated stats)"""
+        """Try to spawn a new guest to the waiting list (with LLM-generated name, species, and stats)"""
         # Check total guest capacity (including waiting guests)
         current_guests = game_state.guests.count()
         if current_guests >= game_state.max_guests:
@@ -278,14 +278,15 @@ class GameService:
         if random.random() > 0.3:
             return
 
-        # Select random guest type with weighted probabilities
+        # Select random guest type and species with weighted probabilities
         guest_type = GameService._select_random_guest_type()
+        species = GameService._select_random_species()
 
         # Try to generate guest name with LLM (fallback to traditional)
         llm = get_llm_service()
         guest_name = None
         if llm.enabled:
-            guest_name = llm.generate_guest_name(guest_type)
+            guest_name = llm.generate_guest_name(guest_type, species)
 
         # Fallback to traditional name pool if LLM fails
         if not guest_name:
@@ -294,7 +295,7 @@ class GameService:
         # Try to generate stats with LLM (fallback to traditional)
         llm_stats = None
         if llm.enabled:
-            llm_stats = llm.generate_guest_stats(guest_type, guest_name)
+            llm_stats = llm.generate_guest_stats(guest_type, species, guest_name)
 
         # Use LLM stats if available, otherwise fallback to traditional
         if llm_stats:
@@ -319,6 +320,7 @@ class GameService:
             room=None,  # Guest starts in waiting list
             name=guest_name,
             guest_type=guest_type,
+            species=species,
             patience=patience,
             satisfaction=satisfaction,
             gold_per_tick=gold_per_tick,
@@ -350,6 +352,51 @@ class GameService:
 
         types, weights = zip(*guest_types)
         return random.choices(types, weights=weights, k=1)[0]
+
+    @staticmethod
+    def _select_random_species() -> str:
+        """Select a random species with weighted probabilities (common species appear more often)"""
+        species = [
+            # Common races (70% chance)
+            (GuestSpecies.HUMAN, 30),
+            (GuestSpecies.ELF, 12),
+            (GuestSpecies.DWARF, 10),
+            (GuestSpecies.HALFLING, 8),
+            (GuestSpecies.GNOME, 5),
+            (GuestSpecies.HALF_ELF, 5),
+
+            # Uncommon races (20% chance)
+            (GuestSpecies.HALF_ORC, 4),
+            (GuestSpecies.ORC, 3),
+            (GuestSpecies.TIEFLING, 3),
+            (GuestSpecies.DRAGONBORN, 3),
+            (GuestSpecies.GOLIATH, 2),
+            (GuestSpecies.TABAXI, 2),
+            (GuestSpecies.AASIMAR, 2),
+            (GuestSpecies.FIRBOLG, 1),
+
+            # Daggerheart species (5% chance)
+            (GuestSpecies.FAERIE, 1),
+            (GuestSpecies.KATARI, 1),
+            (GuestSpecies.GALAPA, 1),
+            (GuestSpecies.RIBBET, 1),
+            (GuestSpecies.DAEMON, 1),
+
+            # Exotic D&D (4% chance)
+            (GuestSpecies.KENKU, 1),
+            (GuestSpecies.LIZARDFOLK, 1),
+            (GuestSpecies.WARFORGED, 1),
+            (GuestSpecies.CHANGELING, 1),
+
+            # Rare (1% chance)
+            (GuestSpecies.DRAGON, 0.5),
+            (GuestSpecies.VAMPIRE, 0.2),
+            (GuestSpecies.LICH, 0.1),
+            (GuestSpecies.MODRON, 0.2),
+        ]
+
+        species_types, weights = zip(*species)
+        return random.choices(species_types, weights=weights, k=1)[0]
 
     @staticmethod
     def _get_guest_attributes(guest_type: str) -> dict:
