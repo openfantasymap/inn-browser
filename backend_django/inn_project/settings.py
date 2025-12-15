@@ -63,8 +63,16 @@ WSGI_APPLICATION = 'inn_project.wsgi.application'
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        "HOST": "51.15.160.236",
+        "PORT": "49432",
+        "USER": "admin",
+        "PASSWORD": "85af6f3f99864132343a5f0434a12944edc",
+        "OPTIONS": {
+            "pool": True,
+            "server_side_binding": True,
+        }
     }
 }
 
@@ -99,6 +107,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS settings for Angular frontend
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
+    "https://ofm-inn.netlify.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -130,6 +139,8 @@ STRIPE_WEBHOOK_SECRET = os.environ.get(
     ''  # Optional for development, required for production
 )
 
+
+
 # ============================================================================
 # OPENROUTER CONFIGURATION
 # ============================================================================
@@ -137,7 +148,7 @@ STRIPE_WEBHOOK_SECRET = os.environ.get(
 # Get API key from: https://openrouter.ai/keys
 OPENROUTER_API_KEY = os.environ.get(
     'OPENROUTER_API_KEY',
-    ''  # Add your OpenRouter API key here or via environment variable
+    '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'  # Add your OpenRouter API key here or via environment variable
 )
 
 # Default model to use for guest generation
@@ -145,8 +156,8 @@ OPENROUTER_API_KEY = os.environ.get(
 # Paid options: 'anthropic/claude-3.5-sonnet', 'openai/gpt-4o-mini', etc.
 OPENROUTER_DEFAULT_MODEL = os.environ.get(
     'OPENROUTER_DEFAULT_MODEL',
-    'meta-llama/llama-3.1-8b-instruct:free'  # Free tier model
+    'meta-llama/llama-3.2-3b-instruct:free'  # Free tier model
 )
 
 # Enable/disable LLM guest generation (falls back to traditional generation if disabled or fails)
-USE_LLM_GUEST_GENERATION = os.environ.get('USE_LLM_GUEST_GENERATION', 'true').lower() == 'true'
+USE_LLM_GUEST_GENERATION = False#os.environ.get('USE_LLM_GUEST_GENERATION', 'true').lower() == 'true'

@@ -8,6 +8,7 @@ class RoomType(models.TextChoices):
     STANDARD = 'standard', 'Standard'
     DELUXE = 'deluxe', 'Deluxe'
     ROYAL = 'royal', 'Royal'
+    EXTREME = 'extreme', 'Extreme'
 
 
 class GuestType(models.TextChoices):
