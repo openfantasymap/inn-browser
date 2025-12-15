@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, interval, Subject, BehaviorSubject } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { InnState, RoomType, ExperimentResult } from '../models/game.models';
+import { AuthService } from '../core/auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +17,9 @@ export class GameService {
   private tickInterval = 1000; // 1 second
   private autoTickSubscription: any;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private auth: AuthService) {
+    this.playerId = auth.getUserId();
+  }
 
   getGameState(): Observable<InnState> {
     return this.http.get<InnState>(`${this.apiUrl}/game/${this.playerId}`).pipe(
