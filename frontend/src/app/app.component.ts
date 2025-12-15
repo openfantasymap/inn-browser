@@ -3,12 +3,21 @@ import { CommonModule } from '@angular/common';
 import { GameService } from './services/game.service';
 import { AuthService, User } from './core/auth/auth.service';
 import { LoginComponent } from './core/auth/login/login.component';
+import { HeaderComponent } from './shared/header/header.component';
+import { ResourcesPanelComponent } from './shared/resources-panel/resources-panel.component';
+import { TabNavigationComponent } from './shared/tab-navigation/tab-navigation.component';
 import { InnState, Room, Guest, Upgrade, RoomType, TavernItem, Recipe, ItemType, ItemQuality, Ingredient, ExperimentResult } from './models/game.models';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, LoginComponent],
+  imports: [
+    CommonModule,
+    LoginComponent,
+    HeaderComponent,
+    ResourcesPanelComponent,
+    TabNavigationComponent
+  ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })

@@ -1,1 +1,12 @@
-<p>tab-navigation works!</p>
+<div class="tab-navigation">
+  <button class="tab-button"
+          [class.active]="activeTab === 'inn'"
+          (click)="switchTab('inn')">
+    🏠 Inn Management
+  </button>
+  <button class="tab-button"
+          [class.active]="activeTab === 'tavern'"
+          (click)="switchTab('tavern')">
+    🍽️ Tavern & Crafting
+  </button>
+</div>

@@ -1,1 +1,32 @@
-<p>resources-panel works!</p>
+<div class="resources-panel">
+  <div class="resource">
+    <span class="resource-icon">💰</span>
+    <span class="resource-label">Gold:</span>
+    <span class="resource-value">{{ gameState.resources.gold | number:'1.0-0' }}</span>
+  </div>
+  <div class="resource">
+    <span class="resource-icon">⭐</span>
+    <span class="resource-label">Reputation:</span>
+    <span class="resource-value">{{ gameState.resources.reputation | number:'1.0-1' }}</span>
+  </div>
+  <div class="resource">
+    <span class="resource-icon">👥</span>
+    <span class="resource-label">Max Guests:</span>
+    <span class="resource-value">{{ gameState.resources.max_guests }}</span>
+  </div>
+  <div class="resource">
+    <span class="resource-icon">📈</span>
+    <span class="resource-label">Income Multiplier:</span>
+    <span class="resource-value">{{ gameState.total_income_multiplier | number:'1.0-1' }}x</span>
+  </div>
+  <div class="resource">
+    <span class="resource-icon">🗺️</span>
+    <span class="resource-label">Location:</span>
+    <span class="resource-value">({{ gameState.location.x }}, {{ gameState.location.y }})</span>
+  </div>
+  <div class="resource">
+    <span class="resource-icon">⏰</span>
+    <span class="resource-label">Max Offline:</span>
+    <span class="resource-value">{{ gameState.max_offline_hours }}h</span>
+  </div>
+</div>

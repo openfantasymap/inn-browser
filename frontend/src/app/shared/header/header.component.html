@@ -1,1 +1,13 @@
-<p>header works!</p>
+<header class="game-header">
+  <div class="header-left">
+    <h1>🏰 {{ title }}</h1>
+  </div>
+  <div class="header-right">
+    <div class="user-info" *ngIf="currentUser">
+      <img *ngIf="currentUser.picture" [src]="currentUser.picture" alt="User" class="user-avatar">
+      <span class="user-name">{{ currentUser.name }}</span>
+    </div>
+    <button class="new-game-btn" (click)="onNewGame()">New Game</button>
+    <button class="sign-out-btn" (click)="onSignOut()">Sign Out</button>
+  </div>
+</header>
