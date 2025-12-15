@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, interval, Subject, BehaviorSubject } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { InnState, RoomType, ExperimentResult } from '../models/game.models';
 import { AuthService } from '../core/auth/auth.service';
+import { MqttService } from './mqtt.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,118 +14,105 @@ export class GameService {
   private gameStateSubject = new BehaviorSubject<InnState | null>(null);
   public gameState$ = this.gameStateSubject.asObservable();
 
-  private tickInterval = 1000; // 1 second
-  private autoTickSubscription: any;
-
-  constructor(private http: HttpClient, private auth: AuthService) {
+  constructor(
+    private http: HttpClient,
+    private auth: AuthService,
+    private mqttService: MqttService
+  ) {
     this.playerId = auth.getUserId();
+
+    // Connect to MQTT broker
+    this.mqttService.connect();
+
+    // Subscribe to game state updates via MQTT
+    this.mqttService.subscribeToGameState(this.playerId);
+
+    // Pipe MQTT game state updates to our local subject
+    this.mqttService.gameState$.subscribe(state => {
+      if (state) {
+        this.gameStateSubject.next(state);
+      }
+    });
   }
 
   getGameState(): Observable<InnState> {
-    return this.http.get<InnState>(`${this.apiUrl}/game/${this.playerId}`).pipe(
-      tap(state => this.gameStateSubject.next(state))
-    );
+    // MQTT will handle state updates, just return the HTTP response
+    return this.http.get<InnState>(`${this.apiUrl}/game/${this.playerId}`);
   }
 
   startNewGame(): Observable<InnState> {
-    return this.http.post<InnState>(`${this.apiUrl}/game/${this.playerId}`, {}).pipe(
-      tap(state => this.gameStateSubject.next(state))
-    );
+    // MQTT will handle state updates, just return the HTTP response
+    return this.http.post<InnState>(`${this.apiUrl}/game/${this.playerId}`, {});
   }
 
   processTick(): Observable<InnState> {
-    return this.http.post<InnState>(`${this.apiUrl}/tick/${this.playerId}`, {}).pipe(
-      tap(state => this.gameStateSubject.next(state))
-    );
-  }
-
-  startAutoTick(): void {
-    this.autoTickSubscription = interval(this.tickInterval)
-      .pipe(switchMap(() => this.processTick()))
-      .subscribe();
-  }
-
-  stopAutoTick(): void {
-    if (this.autoTickSubscription) {
-      this.autoTickSubscription.unsubscribe();
-    }
+    // MQTT will handle state updates, just return the HTTP response
+    return this.http.post<InnState>(`${this.apiUrl}/tick/${this.playerId}`, {});
   }
 
   assignGuestToRoom(guestId: string, roomId: string): Observable<InnState> {
+    // MQTT will handle state updates
     return this.http.post<InnState>(
       `${this.apiUrl}/assign-guest/${this.playerId}`,
       { guest_id: parseInt(guestId, 10), room_id: parseInt(roomId, 10) }
-    ).pipe(
-      tap(state => this.gameStateSubject.next(state))
     );
   }
 
   cleanRoom(roomId: string): Observable<InnState> {
+    // MQTT will handle state updates
     return this.http.post<InnState>(
       `${this.apiUrl}/clean-room/${this.playerId}/${roomId}`,
       {}
-    ).pipe(
-      tap(state => this.gameStateSubject.next(state))
     );
   }
 
   purchaseUpgrade(upgradeId: string): Observable<InnState> {
+    // MQTT will handle state updates
     return this.http.post<InnState>(
       `${this.apiUrl}/purchase-upgrade/${this.playerId}/${upgradeId}`,
       {}
-    ).pipe(
-      tap(state => this.gameStateSubject.next(state))
     );
   }
 
   buildRoom(roomType: RoomType): Observable<InnState> {
+    // MQTT will handle state updates
     return this.http.post<InnState>(
       `${this.apiUrl}/add-room/${this.playerId}`,
       { room_type: roomType }
-    ).pipe(
-      tap(state => this.gameStateSubject.next(state))
     );
   }
 
   unlockRecipe(recipeId: string): Observable<InnState> {
+    // MQTT will handle state updates
     return this.http.post<InnState>(
       `${this.apiUrl}/unlock-recipe/${this.playerId}/${recipeId}`,
       {}
-    ).pipe(
-      tap(state => this.gameStateSubject.next(state))
     );
   }
 
   craftItem(itemId: string, quantity: number = 1): Observable<InnState> {
+    // MQTT will handle state updates
     return this.http.post<InnState>(
       `${this.apiUrl}/craft-item/${this.playerId}`,
       null,
       { params: { item_id: itemId, quantity: quantity.toString() } }
-    ).pipe(
-      tap(state => this.gameStateSubject.next(state))
     );
   }
 
   serveGuest(guestId: string, itemId: string): Observable<InnState> {
+    // MQTT will handle state updates
     return this.http.post<InnState>(
       `${this.apiUrl}/serve-guest/${this.playerId}`,
       null,
       { params: { guest_id: guestId, item_id: itemId } }
-    ).pipe(
-      tap(state => this.gameStateSubject.next(state))
     );
   }
 
   experimentWithIngredients(ingredientIds: string[]): Observable<ExperimentResult> {
+    // MQTT will handle state updates
     return this.http.post<ExperimentResult>(
       `${this.apiUrl}/experiment/${this.playerId}`,
       { ingredient_ids: ingredientIds }
-    ).pipe(
-      tap(result => {
-        if (result.game_state) {
-          this.gameStateSubject.next(result.game_state);
-        }
-      })
     );
   }
 
@@ -161,11 +148,10 @@ export class GameService {
   }
 
   purchaseIngredient(ingredientId: string, quantity: number): Observable<InnState> {
+    // MQTT will handle state updates
     return this.http.post<InnState>(
       `${this.apiUrl}/purchase-ingredient/${this.playerId}`,
       { ingredient_id: ingredientId, quantity: quantity }
-    ).pipe(
-      tap(state => this.gameStateSubject.next(state))
     );
   }
 }

@@ -64,12 +64,12 @@ export class AppComponent implements OnInit, OnDestroy {
       this.gameState = state;
     });
 
+    // Initial game state fetch - updates will come via MQTT
     this.gameService.getGameState().subscribe();
-    this.gameService.startAutoTick();
   }
 
   ngOnDestroy(): void {
-    this.gameService.stopAutoTick();
+    // MQTT connection cleanup is handled by the service
   }
 
   startNewGame(): void {
@@ -77,7 +77,6 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   signOut(): void {
-    this.gameService.stopAutoTick();
     this.authService.signOut();
     this.gameState = null;
   }

@@ -10,9 +10,24 @@ import json
 from .game_service import GameService
 from .serializers import GameStateSerializer
 from .models import UpgradeTemplate, GameState
+from .mqtt_service import get_mqtt_service
 
 # Configure Stripe
 stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', 'sk_test_placeholder')
+
+# Get MQTT service instance
+mqtt_service = get_mqtt_service()
+
+
+def serialize_and_publish(game_state, player_id):
+    """Helper to serialize game state and publish via MQTT"""
+    serializer = GameStateSerializer(game_state)
+    data = serializer.data
+
+    # Publish to MQTT for real-time updates
+    mqtt_service.publish_game_state(player_id, data)
+
+    return data
 
 
 @api_view(['GET'])
@@ -25,24 +40,20 @@ def health_check(request):
 def game_state(request, player_id):
     """Get or create game state for a player"""
     try:
-        if request.method == 'POST':
-            game_state = GameService.create_or_get_game_state(player_id)
-        else:
-            game_state = GameService.create_or_get_game_state(player_id)
-
-        serializer = GameStateSerializer(game_state)
-        return Response(serializer.data)
+        game_state = GameService.create_or_get_game_state(player_id)
+        data = serialize_and_publish(game_state, player_id)
+        return Response(data)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
 def process_tick(request, player_id):
-    """Process one game tick"""
+    """Process one game tick and publish via MQTT"""
     try:
         game_state = GameService.process_tick(player_id)
-        serializer = GameStateSerializer(game_state)
-        return Response(serializer.data)
+        data = serialize_and_publish(game_state, player_id)
+        return Response(data)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
