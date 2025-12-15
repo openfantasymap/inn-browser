@@ -163,7 +163,7 @@ OPENROUTER_DEFAULT_MODEL = os.environ.get(
 USE_LLM_GUEST_GENERATION = False#os.environ.get('USE_LLM_GUEST_GENERATION', 'true').lower() == 'true'
 
 # MQTT Configuration for real-time updates
-MQTT_BROKER_HOST = os.environ.get('MQTT_BROKER_HOST', 'localhost')
+MQTT_BROKER_HOST = os.environ.get('MQTT_BROKER_HOST', 'broker.hivemq.com')
 MQTT_BROKER_PORT = int(os.environ.get('MQTT_BROKER_PORT', '1883'))
 MQTT_USERNAME = os.environ.get('MQTT_USERNAME', '')
 MQTT_PASSWORD = os.environ.get('MQTT_PASSWORD', '')
