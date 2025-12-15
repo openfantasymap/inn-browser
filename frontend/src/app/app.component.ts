@@ -1,12 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GameService } from './services/game.service';
+import { AuthService, User } from './core/auth/auth.service';
+import { LoginComponent } from './core/auth/login/login.component';
 import { InnState, Room, Guest, Upgrade, RoomType, TavernItem, Recipe, ItemType, ItemQuality, Ingredient, ExperimentResult } from './models/game.models';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoginComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
@@ -15,6 +17,10 @@ export class AppComponent implements OnInit, OnDestroy {
   gameState: InnState | null = null;
   selectedGuest: Guest | null = null;
   RoomType = RoomType;
+
+  // Authentication
+  currentUser: User | null = null;
+  isAuthenticated: boolean = false;
 
   // Tab state
   activeTab: 'inn' | 'tavern' = 'inn';
@@ -26,9 +32,25 @@ export class AppComponent implements OnInit, OnDestroy {
   draggedGuest: Guest | null = null;
   dragOverRoomId: string | null = null;
 
-  constructor(private gameService: GameService) {}
+  constructor(
+    private gameService: GameService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
+    // Subscribe to authentication state
+    this.authService.user$.subscribe(user => {
+      this.currentUser = user;
+      this.isAuthenticated = user !== null;
+
+      // If authenticated, initialize game
+      if (this.isAuthenticated) {
+        this.initializeGame();
+      }
+    });
+  }
+
+  private initializeGame(): void {
     this.gameService.gameState$.subscribe(state => {
       this.gameState = state;
     });
@@ -43,6 +65,12 @@ export class AppComponent implements OnInit, OnDestroy {
 
   startNewGame(): void {
     this.gameService.startNewGame().subscribe();
+  }
+
+  signOut(): void {
+    this.gameService.stopAutoTick();
+    this.authService.signOut();
+    this.gameState = null;
   }
 
   switchTab(tab: 'inn' | 'tavern'): void {

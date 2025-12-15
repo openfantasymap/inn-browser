@@ -1,8 +1,21 @@
-<div class="game-container" *ngIf="gameState">
+<!-- Login Screen -->
+<app-login *ngIf="!isAuthenticated"></app-login>
+
+<!-- Game -->
+<div class="game-container" *ngIf="isAuthenticated && gameState">
   <!-- Header -->
   <header class="game-header">
-    <h1>🏰 {{ title }}</h1>
-    <button class="new-game-btn" (click)="startNewGame()">New Game</button>
+    <div class="header-left">
+      <h1>🏰 {{ title }}</h1>
+    </div>
+    <div class="header-right">
+      <div class="user-info" *ngIf="currentUser">
+        <img *ngIf="currentUser.picture" [src]="currentUser.picture" alt="User" class="user-avatar">
+        <span class="user-name">{{ currentUser.name }}</span>
+      </div>
+      <button class="new-game-btn" (click)="startNewGame()">New Game</button>
+      <button class="sign-out-btn" (click)="signOut()">Sign Out</button>
+    </div>
   </header>
 
   <!-- Resources Panel -->
@@ -519,6 +532,6 @@
   </div>
 </div>
 
-<div class="loading" *ngIf="!gameState">
+<div class="loading" *ngIf="isAuthenticated && !gameState">
   <h2>Loading Fantasy Inn Tycoon...</h2>
 </div>

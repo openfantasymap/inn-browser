@@ -1,0 +1,36 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>🏰 Fantasy Inn Tycoon</h1>
+      <p class="tagline">Build your legendary inn and serve mystical guests!</p>
+    </div>
+
+    <div class="login-content">
+      <h2>Welcome, Innkeeper!</h2>
+      <p class="description">Sign in to save your progress across devices</p>
+
+      <!-- Google Sign-In Button -->
+      <div class="sign-in-section">
+        <div #googleButton class="google-button-container"></div>
+      </div>
+
+      <div class="divider">
+        <span>OR</span>
+      </div>
+
+      <!-- Guest Mode Button -->
+      <button class="guest-button" (click)="continueAsGuest()">
+        <span class="guest-icon">👤</span>
+        Continue as Guest
+      </button>
+
+      <p class="guest-note">
+        <small>Guest progress is saved locally on this device only</small>
+      </p>
+    </div>
+
+    <div class="login-footer">
+      <p><small>Sign in to sync your game across devices and unlock cloud saves</small></p>
+    </div>
+  </div>
+</div>
