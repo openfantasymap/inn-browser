@@ -29,10 +29,10 @@ class MQTTService:
     def _setup_client(self):
         """Initialize MQTT client"""
         # Get MQTT broker settings from environment or use defaults
-        self.broker_host = os.environ.get('MQTT_BROKER_HOST', 'localhost')
+        self.broker_host = os.environ.get('MQTT_BROKER_HOST', 'broker.hivemq.com')
         self.broker_port = int(os.environ.get('MQTT_BROKER_PORT', '1883'))
-        self.username = os.environ.get('MQTT_USERNAME', '')
-        self.password = os.environ.get('MQTT_PASSWORD', '')
+        self.username = os.environ.get('MQTT_USERNAME')
+        self.password = os.environ.get('MQTT_PASSWORD')
 
         # Create MQTT client
         self._client = mqtt.Client(client_id="fantasy_inn_backend", protocol=mqtt.MQTTv5)
