@@ -14,7 +14,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
   // TODO: Replace with your actual Google Client ID
   // Get this from: https://console.cloud.google.com/apis/credentials
-  private readonly GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com';
+  private readonly GOOGLE_CLIENT_ID = '600142170034-84c58rijt63ujplcdea50meb5pv5j427.apps.googleusercontent.com';
 
   constructor(private authService: AuthService) {}
 
