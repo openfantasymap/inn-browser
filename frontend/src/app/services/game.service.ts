@@ -179,4 +179,16 @@ export class GameService {
       `${this.apiUrl}/upgrades`
     );
   }
+
+  // Helper method to get available (not purchased) upgrades
+  getAvailableUpgrades(gameState: InnState | null): Upgrade[] {
+    if (!gameState) return [];
+    return gameState.upgrades.filter(upgrade => !upgrade.purchased);
+  }
+
+  // Helper method to get acquired (purchased) upgrades
+  getAcquiredUpgrades(gameState: InnState | null): Upgrade[] {
+    if (!gameState) return [];
+    return gameState.upgrades.filter(upgrade => upgrade.purchased);
+  }
 }

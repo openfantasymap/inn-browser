@@ -527,4 +527,13 @@ export class AppComponent implements OnInit, OnDestroy {
     const progress = (customersServed / threshold) * 100;
     return Math.min(progress, 100);
   }
+
+  // Upgrade filtering helpers
+  getAvailableUpgrades(): Upgrade[] {
+    return this.gameService.getAvailableUpgrades(this.gameState);
+  }
+
+  getAcquiredUpgrades(): Upgrade[] {
+    return this.gameService.getAcquiredUpgrades(this.gameState);
+  }
 }
