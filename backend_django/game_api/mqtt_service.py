@@ -1,7 +1,7 @@
 """
 MQTT Service for real-time game state updates
 """
-import json
+import orjson as json
 import os
 import paho.mqtt.client as mqtt
 from django.conf import settings

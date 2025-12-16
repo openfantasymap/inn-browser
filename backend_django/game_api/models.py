@@ -339,8 +339,10 @@ class GameState(models.Model):
     last_offline_hours = models.FloatField(default=0.0)  # For display purposes
 
     # Map location
+    map_world = models.CharField(max_length=1000, default="toril")
     map_x = models.IntegerField(default=0)  # X coordinate on the map
     map_y = models.IntegerField(default=0)  # Y coordinate on the map
+    inn_name = models.CharField(max_length=1000, default="Inn")
 
     # Inventories (stored as JSON)
     item_inventory = models.JSONField(default=dict)  # {item_id: quantity}

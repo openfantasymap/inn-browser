@@ -23,7 +23,8 @@ class RoomSerializer(serializers.ModelSerializer):
 class GuestSerializer(serializers.ModelSerializer):
     """Serializer for Guest model"""
     room_id = serializers.CharField(source='room.id', read_only=True, allow_null=True)
-
+    check_in_time = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    
     class Meta:
         model = Guest
         fields = ['id', 'name', 'guest_type', 'species', 'room_id', 'patience',
@@ -57,6 +58,7 @@ class PlayerRecipeSerializer(serializers.ModelSerializer):
     """Serializer for PlayerRecipe model"""
     id = serializers.CharField(source='recipe_id', read_only=True)
     item_id = serializers.CharField(source='item.item_id', read_only=True)
+    unlocked_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
 
     class Meta:
         model = PlayerRecipe
@@ -72,6 +74,8 @@ class ActiveBuffSerializer(serializers.ModelSerializer):
     effect_type = serializers.CharField(source='upgrade_template.effect_type', read_only=True)
     effect_value = serializers.FloatField(source='upgrade_template.effect_value', read_only=True)
     time_remaining_seconds = serializers.SerializerMethodField()
+    activated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    expires_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
 
     class Meta:
         model = ActiveBuff
@@ -92,6 +96,10 @@ class PremiumPurchaseSerializer(serializers.ModelSerializer):
     upgrade_id = serializers.CharField(source='upgrade_template.upgrade_id', read_only=True)
     upgrade_name = serializers.CharField(source='upgrade_template.name', read_only=True)
     amount_usd = serializers.SerializerMethodField()
+
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    completed_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
 
     class Meta:
         model = PremiumPurchase
@@ -132,6 +140,7 @@ class GameStateSerializer(serializers.ModelSerializer):
     guests = GuestSerializer(many=True, read_only=True)
     upgrades = serializers.SerializerMethodField()  # Return all templates with purchase status
     recipes = serializers.SerializerMethodField()  # Changed to use player_recipes
+    last_update = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
 
     # Premium/buff fields
     active_buffs = serializers.SerializerMethodField()
@@ -241,18 +250,8 @@ class GameStateSerializer(serializers.ModelSerializer):
 
             upgrades_data.append({
                 'id': template.upgrade_id,  # Frontend expects 'id'
-                'upgrade_id': template.upgrade_id,
-                'name': template.name,
-                'description': template.description,
-                'cost': template.cost,
-                'effect_type': template.effect_type,
-                'effect_value': template.effect_value,
                 'purchased': purchase is not None,
                 'purchased_at': purchase.purchased_at if purchase else None,
-                'is_premium': template.is_premium,
-                'premium_price_cents': template.premium_price_cents,
-                'duration_seconds': template.duration_seconds,
-                'is_consumable': template.is_consumable
             })
 
         return upgrades_data
