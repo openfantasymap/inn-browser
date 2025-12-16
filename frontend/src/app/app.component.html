@@ -40,7 +40,7 @@
     <div class="rooms-section">
       <h2>🏠 Rooms</h2>
       <div class="rooms-grid">
-        <div *ngFor="let room of gameState.rooms"
+        <div *ngFor="let room of getSortedRooms()"
              class="room-card"
              [class.occupied]="room.occupied"
              [class.selected]="selectedGuest"

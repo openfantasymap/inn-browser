@@ -16,8 +16,8 @@ import { InnState, Room, Guest, Upgrade, RoomType, TavernItem, Recipe, ItemType,
     LoginComponent,
     HeaderComponent,
     ResourcesPanelComponent,
-    TabNavigationComponent
-  ],
+    TabNavigationComponent,
+],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
@@ -185,13 +185,18 @@ export class AppComponent implements OnInit, OnDestroy {
     return requirements[roomType];
   }
 
+  getSortedRooms(){
+    return this.gameState?.rooms.sort((a:Room, b:Room)=> (parseInt(a.id)-parseInt(b.id)));
+  }
+
   getWaitingGuests(): Guest[] {
     return this.gameState?.guests.filter(g => !g.room_id) || [];
   }
 
   getGuestInRoom(roomId: string): Guest | null {
     if (!this.gameState) return null;
-    return this.gameState.guests.find(g => g.room_id === roomId) || null;
+    //@ts-ignore
+    return this.gameState.guests.find(g => g.room_id && parseInt(g.room_id) === roomId) || null;
   }
 
   getCleanlinessColor(cleanliness: number): string {

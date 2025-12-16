@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import mqtt from 'mqtt';
 import { InnState } from '../models/game.models';
+import { AuthService } from '../core/auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,15 +15,18 @@ export class MqttService {
   private connectionStatusSubject = new BehaviorSubject<boolean>(false);
   public connectionStatus$ = this.connectionStatusSubject.asObservable();
 
-  private brokerUrl = 'ws://broker.hivemq.com:8884'; // WebSocket port for MQTT
+  private brokerUrl = 'ws://broker.hivemq.com:8000/mqtt'; // WebSocket port for MQTT
   private connected = false;
 
-  constructor() {}
+  constructor(
+    private auth: AuthService
+  ) {}
 
   /**
    * Connect to MQTT broker
    */
   connect(): void {
+    const pid = this.auth.getUserId();
     if (this.client) {
       console.log('MQTT client already exists');
       return;
@@ -31,10 +35,12 @@ export class MqttService {
     try {
       // Connect to MQTT broker via WebSocket
       this.client = mqtt.connect(this.brokerUrl, {
-        clientId: `fantasy_inn_web_${Math.random().toString(16).substr(2, 8)}`,
-        clean: true,
+        clientId: `fantasy_inn_web_${pid}`,
+        clean: false,
         reconnectPeriod: 5000, // Reconnect every 5 seconds if disconnected
-        connectTimeout: 30000
+        connectTimeout: 30000,
+        rejectUnauthorized: false,
+        
       });
 
       // Connection event handlers
