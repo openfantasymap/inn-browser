@@ -267,11 +267,15 @@
   font-size: 0.9em;
 }
 
+.guest-info{
+  display: flex;
+  flex-direction: row;
+}
+
 .guest-in-room {
   background: rgba(255, 255, 255, 0.7);
   padding: 10px;
   border-radius: 8px;
-  margin-top: 10px;
 }
 
 .guest-info {
@@ -371,7 +375,15 @@
   margin-top: 0;
 }
 
-.guests-list,
+.guests-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
 .upgrades-list {
   display: flex;
   flex-direction: column;
@@ -388,6 +400,7 @@
   cursor: grab;
   transition: all 0.3s;
   user-select: none;
+  width: 150px;
 }
 
 .guest-card:active {

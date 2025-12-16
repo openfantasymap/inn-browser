@@ -52,23 +52,7 @@
           <div class="room-header">
             <span class="room-type">{{ getRoomTypeDisplay(room.room_type) }}</span>
             <span class="room-level">Lv.{{ room.level }}</span>
-          </div>
-
-          <div class="room-info">
-            <div class="info-row">
-              <span>💵 Income Rate:</span>
-              <span>{{ room.income_rate }}x</span>
-            </div>
-            <div class="info-row">
-              <span>🧹 Cleanliness:</span>
-              <span [style.color]="getCleanlinessColor(room.cleanliness)">
-                {{ room.cleanliness | number:'1.0-0' }}%
-              </span>
-            </div>
-            <div class="info-row">
-              <span>👥 Customers:</span>
-              <span>{{ room.customers_served }} / {{ getNextLevelThreshold(room.level) }}</span>
-            </div>
+            <span class="room-level">💵 {{ room.income_rate }}x</span>
           </div>
 
           <!-- Level Progress Bar -->
@@ -92,11 +76,13 @@
           </div>
 
           <div *ngIf="room.occupied" class="guest-in-room">
-            <div class="guest-info-header">
-              <span class="guest-type-badge">{{ getGuestTypeDisplay(getGuestInRoom(room.id)?.guest_type || '') }}</span>
-            </div>
-            <div class="guest-name-display">
-              {{ getGuestInRoom(room.id)?.name }}
+            <div class="guest-info">
+              <div class="guest-info-header">
+                <span class="guest-type-badge">{{ getGuestTypeDisplay(getGuestInRoom(room.id)?.guest_type || '') }}</span>
+              </div>
+              <div class="guest-name-display">
+                {{ getGuestInRoom(room.id)?.name }}
+              </div>
             </div>
             <div class="patience-bar">
               <div class="patience-fill"
@@ -108,8 +94,9 @@
 
           <button *ngIf="!room.occupied"
                   class="clean-btn"
+                  [style.backgroundColor]="getCleanlinessColor(room.cleanliness)"
                   (click)="cleanRoom(room); $event.stopPropagation()">
-            🧹 Clean
+            🧹 Clean ({{room.cleanliness | number:'1.0-0'}}%)
           </button>
         </div>
       </div>
@@ -203,6 +190,12 @@
       <!-- Upgrades -->
       <div class="upgrades-section">
         <h2>⚡ Upgrades</h2>
+        <div class="tab-navigation">
+          <button class="tab-button" [class.active]="activeUpgradeTab === 'available'" (click)="activeUpgradeTab='available'">Available</button>
+          <button class="tab-button" [class.active]="activeUpgradeTab === 'purchased'" (click)="activeUpgradeTab='purchased'">Purchased</button>
+          <button class="tab-button" [class.active]="activeUpgradeTab === 'premium'" (click)="activeUpgradeTab='premium'">Premium</button>
+        </div>
+        @if(activeUpgradeTab==='available'){
         <div class="upgrades-list">
           <div *ngFor="let upgrade of getAvailableUpgrades()"
                class="upgrade-card"
@@ -223,6 +216,29 @@
             </button>
           </div>
         </div>
+      } 
+      @if(activeUpgradeTab === 'purchased'){
+        <div class="upgrades-list">
+          <div *ngFor="let upgrade of getAcquiredUpgrades()"
+               class="upgrade-card"
+               [class.purchased]="upgrade.purchased">
+            <div class="upgrade-header">
+              <span class="upgrade-name">{{ upgrade.name }}</span>
+              <span class="upgrade-cost" *ngIf="!upgrade.purchased">
+                {{ upgrade.cost }} 💰
+              </span>
+              <span class="purchased-badge" *ngIf="upgrade.purchased">✓</span>
+            </div>
+            <p class="upgrade-description">{{ upgrade.description }}</p>
+            <button *ngIf="!upgrade.purchased"
+                    class="purchase-btn"
+                    [disabled]="gameState.resources.gold < upgrade.cost"
+                    (click)="purchaseUpgrade(upgrade)">
+              Purchase
+            </button>
+          </div>
+        </div>
+      }
       </div>
     </div>
   </div>
