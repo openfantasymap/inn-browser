@@ -204,7 +204,7 @@
       <div class="upgrades-section">
         <h2>⚡ Upgrades</h2>
         <div class="upgrades-list">
-          <div *ngFor="let upgrade of gameState.upgrades"
+          <div *ngFor="let upgrade of getAvailableUpgrades()"
                class="upgrade-card"
                [class.purchased]="upgrade.purchased">
             <div class="upgrade-header">

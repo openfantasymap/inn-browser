@@ -200,6 +200,7 @@ export interface Resources {
 }
 
 export interface Location {
+  map: string;
   x: number;
   y: number;
 }
