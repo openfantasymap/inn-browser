@@ -19,7 +19,7 @@ stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', 'sk_test_placeholder')
 mqtt_service = get_mqtt_service()
 
 
-def serialize_and_publish(game_state, player_id):
+def serialize_and_publish(game_state, player_id, mqtt_service=mqtt_service):
     """Helper to serialize game state and publish via MQTT"""
     serializer = GameStateSerializer(game_state)
     data = serializer.data
@@ -31,6 +31,37 @@ def serialize_and_publish(game_state, player_id):
 
 
 @api_view(['GET'])
+def get_upgrades(request):
+    """
+    Get all available premium upgrades
+    """
+    try:
+        templates = UpgradeTemplate.objects.filter(is_premium=False)
+
+        upgrades_data = []
+        for template in templates:
+            upgrades_data.append({
+                'id': template.upgrade_id,  # Frontend expects 'id'
+                'upgrade_id': template.upgrade_id,
+                'name': template.name,
+                'description': template.description,
+                'cost': template.cost,
+                'effect_type': template.effect_type,
+                'effect_value': template.effect_value,
+                'purchased': False,
+                'purchased_at': None,
+                'is_premium': template.is_premium,
+                'premium_price_cents': template.premium_price_cents,
+                'duration_seconds': template.duration_seconds,
+                'is_consumable': template.is_consumable
+            })
+
+        return Response(upgrades_data)
+
+    except Exception as e:
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
 def health_check(request):
     """Health check endpoint"""
     return Response({'status': 'healthy', 'backend': 'Django + DRF'})
@@ -39,13 +70,9 @@ def health_check(request):
 @api_view(['GET', 'POST'])
 def game_state(request, player_id):
     """Get or create game state for a player"""
-    try:
-        game_state = GameService.create_or_get_game_state(player_id)
-        data = serialize_and_publish(game_state, player_id)
-        return Response(data)
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+    game_state = GameService.create_or_get_game_state(player_id)
+    data = serialize_and_publish(game_state, player_id)
+    return Response({"response": "ok"})
 
 @api_view(['POST'])
 def process_tick(request, player_id):
@@ -53,9 +80,9 @@ def process_tick(request, player_id):
     try:
         game_state = GameService.process_tick(player_id)
         data = serialize_and_publish(game_state, player_id)
-        return Response(data)
+        return Response({"response": "ok"})
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -64,34 +91,36 @@ def add_room(request, player_id):
     try:
         room_type = request.data.get('room_type', 'basic')
         game_state = GameService.add_room(player_id, room_type)
-        serializer = GameStateSerializer(game_state)
-        return Response(serializer.data)
+        serialize_and_publish(game_state, player_id)
+        return Response({"response":"ok"})
     except ValueError as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
 def assign_guest(request, player_id):
     """Assign a waiting guest to an available room"""
+    print(player_id)
     try:
         guest_id = request.data.get('guest_id')
+        print(guest_id)
         room_id = request.data.get('room_id')
-
+        print(room_id)
         if not guest_id or not room_id:
             return Response(
-                {'error': 'guest_id and room_id are required'},
+                {"response": "error", 'error': 'guest_id and room_id are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         game_state = GameService.assign_guest_to_room(player_id, int(guest_id), int(room_id))
-        serializer = GameStateSerializer(game_state)
-        return Response(serializer.data)
+        serialize_and_publish(game_state, player_id)
+        return Response({"response": "ok"})
     except ValueError as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -99,12 +128,12 @@ def clean_room(request, player_id, room_id):
     """Clean a specific room"""
     try:
         game_state = GameService.clean_room(player_id, room_id)
-        serializer = GameStateSerializer(game_state)
-        return Response(serializer.data)
+        serialize_and_publish(game_state,player_id)
+        return Response({"response": "ok"})
     except ValueError as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -112,12 +141,13 @@ def purchase_upgrade(request, player_id, upgrade_id):
     """Purchase an upgrade"""
     try:
         game_state = GameService.purchase_upgrade(player_id, upgrade_id)
-        serializer = GameStateSerializer(game_state)
-        return Response(serializer.data)
+        serialize_and_publish(game_state, player_id)
+        return Response({"response": "ok"})
+
     except ValueError as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -125,12 +155,12 @@ def unlock_recipe(request, player_id, recipe_id):
     """Unlock a recipe"""
     try:
         game_state = GameService.unlock_recipe(player_id, recipe_id)
-        serializer = GameStateSerializer(game_state)
-        return Response(serializer.data)
+        serialize_and_publish(game_state, player_id)
+        return Response({"response": "ok"})
     except ValueError as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -141,15 +171,15 @@ def craft_item(request, player_id):
         quantity = int(request.query_params.get('quantity', 1))
 
         if not item_id:
-            return Response({'error': 'item_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"response": "error", 'error': 'item_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         game_state = GameService.craft_item(player_id, item_id, quantity)
-        serializer = GameStateSerializer(game_state)
-        return Response(serializer.data)
+        serialize_and_publish(game_state, player_id)
+        return Response({"response": "ok"})
     except ValueError as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -160,15 +190,15 @@ def serve_guest(request, player_id):
         item_id = request.query_params.get('item_id')
 
         if not guest_id or not item_id:
-            return Response({'error': 'guest_id and item_id are required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"response": "error", 'error': 'guest_id and item_id are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         game_state = GameService.serve_guest(player_id, guest_id, item_id)
-        serializer = GameStateSerializer(game_state)
-        return Response(serializer.data)
+        serialize_and_publish(game_state, player_id)
+        return Response({"response": "ok"})
     except ValueError as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -179,18 +209,18 @@ def purchase_ingredient(request, player_id):
         quantity = request.data.get('quantity', 1)
 
         if not ingredient_id:
-            return Response({'error': 'ingredient_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"response": "error", 'error': 'ingredient_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not isinstance(quantity, int) or quantity < 1:
-            return Response({'error': 'quantity must be a positive integer'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"response": "error", 'error': 'quantity must be a positive integer'}, status=status.HTTP_400_BAD_REQUEST)
 
         game_state = GameService.purchase_ingredient(player_id, ingredient_id, quantity)
-        serializer = GameStateSerializer(game_state)
-        return Response(serializer.data)
+        serialize_and_publish(game_state, player_id)
+        return Response({"response": "ok"})
     except ValueError as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -200,25 +230,22 @@ def experiment_with_ingredients(request, player_id):
         ingredient_ids = request.data.get('ingredient_ids', [])
 
         if not isinstance(ingredient_ids, list):
-            return Response({'error': 'ingredient_ids must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"response": "error", 'error': 'ingredient_ids must be a list'}, status=status.HTTP_400_BAD_REQUEST)
 
         result = GameService.experiment_with_ingredients(player_id, ingredient_ids)
 
         # Serialize game state
         game_state = result.pop('game_state')
         serializer = GameStateSerializer(game_state)
+        serialize_and_publish(game_state, player_id)
 
         # Return result with serialized game state
-        response_data = {
-            **result,
-            'game_state': serializer.data
-        }
 
-        return Response(response_data)
+        return Response(result)
     except ValueError as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # ============================================================================
@@ -242,17 +269,17 @@ def create_checkout_session(request, player_id):
         cancel_url = request.data.get('cancel_url', 'http://localhost:4200/cancel')
 
         if not upgrade_id:
-            return Response({'error': 'upgrade_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"response": "error", 'error': 'upgrade_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Get the upgrade template
         try:
             upgrade_template = UpgradeTemplate.objects.get(upgrade_id=upgrade_id)
         except UpgradeTemplate.DoesNotExist:
-            return Response({'error': f'Upgrade {upgrade_id} not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"response": "error", 'error': f'Upgrade {upgrade_id} not found'}, status=status.HTTP_404_NOT_FOUND)
 
         # Verify it's a premium upgrade
         if not upgrade_template.is_premium:
-            return Response({'error': 'This upgrade is not a premium item'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"response": "error", 'error': 'This upgrade is not a premium item'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Get or create game state
         game_state = GameService.create_or_get_game_state(player_id)
@@ -288,10 +315,10 @@ def create_checkout_session(request, player_id):
             })
 
         except stripe.error.StripeError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @csrf_exempt
@@ -377,7 +404,7 @@ def get_premium_upgrades(request):
         return Response(upgrades_data)
 
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
@@ -395,4 +422,4 @@ def get_active_buffs(request, player_id):
         return Response(serializer.data)
 
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"response": "error", 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
