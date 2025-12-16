@@ -41,6 +41,7 @@ export class AppComponent implements OnInit, OnDestroy {
   draggedGuest: Guest | null = null;
   dragOverRoomId: string | null = null;
 
+
   constructor(
     private gameService: GameService,
     private authService: AuthService

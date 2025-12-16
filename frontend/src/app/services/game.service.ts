@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { InnState, RoomType, ExperimentResult } from '../models/game.models';
+import { Observable, BehaviorSubject, map } from 'rxjs';
+import { InnState, RoomType, ExperimentResult, Upgrade } from '../models/game.models';
 import { AuthService } from '../core/auth/auth.service';
 import { MqttService } from './mqtt.service';
 
@@ -13,6 +13,8 @@ export class GameService {
   private playerId = 'player_1'; // In a real app, this would come from auth
   private gameStateSubject = new BehaviorSubject<InnState | null>(null);
   public gameState$ = this.gameStateSubject.asObservable();
+
+  upgrades: Upgrade[] = [];
 
   constructor(
     private http: HttpClient,
@@ -27,12 +29,27 @@ export class GameService {
     // Subscribe to game state updates via MQTT
     this.mqttService.subscribeToGameState(this.playerId);
 
-    // Pipe MQTT game state updates to our local subject
-    this.mqttService.gameState$.subscribe(state => {
-      if (state) {
-        this.gameStateSubject.next(state);
-      }
-    });
+    this.getUpgrades().subscribe(ups=>{
+      this.upgrades = ups;
+      // Pipe MQTT game state updates to our local subject
+      this.mqttService.gameState$.subscribe(state => {      
+        if (state) {
+          let injectedUpgrades: Upgrade[] = [];
+          state.upgrades.map(x=>{
+            const nx = this.upgrades.filter(y => y.id === x.id);
+            if(nx.length>0){
+              injectedUpgrades.push({...nx[0], ...x});
+            } else {
+              injectedUpgrades.push(nx[0]);
+            }
+          });
+          state.upgrades = injectedUpgrades; 
+          this.gameStateSubject.next(state);
+        }
+      });
+    })
+
+    
 
     setInterval(()=>{this.processTick().subscribe(data=>{console.log('processing tick')})}, 10000);
   }
@@ -154,6 +171,12 @@ export class GameService {
     return this.http.post<InnState>(
       `${this.apiUrl}/purchase-ingredient/${this.playerId}`,
       { ingredient_id: ingredientId, quantity: quantity }
+    );
+  }
+
+  getUpgrades(){
+    return this.http.get<Upgrade[]>(
+      `${this.apiUrl}/upgrades`
     );
   }
 }
