@@ -51,7 +51,7 @@ export class GameService {
 
     
 
-    setInterval(()=>{this.processTick().subscribe(data=>{console.log('processing tick')})}, 10000);
+    setInterval(()=>{this.processTick().subscribe(data=>{console.log('processing tick')})}, 5000);
   }
 
   getGameState(): Observable<InnState> {
