@@ -229,10 +229,8 @@
 
 .room-card.drag-over {
   border-color: #8b5cf6;
-  border-width: 3px;
   background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
   box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
-  transform: scale(1.05);
 }
 
 .room-header {
@@ -409,7 +407,6 @@
 
 .guest-card:hover {
   border-color: #8b5cf6;
-  transform: translateX(4px);
 }
 
 .guest-card.selected {

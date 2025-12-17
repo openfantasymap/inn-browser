@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, map } from 'rxjs';
+import { Observable, BehaviorSubject, map, tap } from 'rxjs';
 import { InnState, RoomType, ExperimentResult, Upgrade } from '../models/game.models';
 import { AuthService } from '../core/auth/auth.service';
 import { MqttService } from './mqtt.service';
@@ -15,6 +15,8 @@ export class GameService {
   public gameState$ = this.gameStateSubject.asObservable();
 
   upgrades: Upgrade[] = [];
+
+  private state: InnState|null = null;
 
   constructor(
     private http: HttpClient,
@@ -44,6 +46,7 @@ export class GameService {
             }
           });
           state.upgrades = injectedUpgrades; 
+          this.state = state;
           this.gameStateSubject.next(state);
         }
       });
@@ -74,7 +77,14 @@ export class GameService {
     return this.http.post<InnState>(
       `${this.apiUrl}/assign-guest/${this.playerId}`,
       { guest_id: parseInt(guestId, 10), room_id: parseInt(roomId, 10) }
-    );
+    ).pipe(tap((response:any) => {
+      //@ts-ignore
+      this.state.rooms.filter(x=>x.id === response.params.room_id)[0].current_guest = response.params.guest_id;
+      //@ts-ignore
+      this.state.guests.filter(x=>x.id === response.params.guest_id)[0].room_id = response.params.room_id;
+      this.gameStateSubject.next(this.state);
+
+    }));
   }
 
   cleanRoom(roomId: string): Observable<InnState> {
