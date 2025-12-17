@@ -10,24 +10,24 @@ import json
 from .game_service import GameService
 from .serializers import GameStateSerializer
 from .models import UpgradeTemplate, GameState
-from .mqtt_service import get_mqtt_service
+#from .mqtt_service import get_mqtt_service
 
 # Configure Stripe
 stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', 'sk_test_placeholder')
 
 # Get MQTT service instance
-mqtt_service = get_mqtt_service()
-
-
-def serialize_and_publish(game_state, player_id, mqtt_service=mqtt_service):
-    """Helper to serialize game state and publish via MQTT"""
-    serializer = GameStateSerializer(game_state)
-    data = serializer.data
-
-    # Publish to MQTT for real-time updates
-    mqtt_service.publish_game_state(player_id, data)
-
-    return data
+#mqtt_service = get_mqtt_service()
+#
+#
+#def serialize_and_publish(game_state, player_id, mqtt_service=mqtt_service):
+#    """Helper to serialize game state and publish via MQTT"""
+#    serializer = GameStateSerializer(game_state)
+#    data = serializer.data
+#
+#    # Publish to MQTT for real-time updates
+#    mqtt_service.publish_game_state(player_id, data)
+#
+#    return data
 
 
 @api_view(['GET'])
@@ -71,7 +71,7 @@ def health_check(request):
 def game_state(request, player_id):
     """Get or create game state for a player"""
     game_state = GameService.create_or_get_game_state(player_id)
-    data = serialize_and_publish(game_state, player_id)
+    #data = serialize_and_publish(game_state, player_id)
     return Response({"response": "ok"})
 
 @api_view(['POST'])
@@ -79,7 +79,7 @@ def process_tick(request, player_id):
     """Process one game tick and publish via MQTT"""
     try:
         game_state = GameService.process_tick(player_id)
-        data = serialize_and_publish(game_state, player_id)
+        #data = serialize_and_publish(game_state, player_id)
         return Response({"response": "ok"})
     except Exception as e:
         return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -90,8 +90,8 @@ def add_room(request, player_id):
     """Add a new room to the inn"""
     try:
         room_type = request.data.get('room_type', 'basic')
-        game_state = GameService.add_room(player_id, room_type)
-        serialize_and_publish(game_state, player_id)
+        GameService.add_room(player_id, room_type)
+        #serialize_and_publish(game_state, player_id)
         return Response({"response":"ok"})
     except ValueError as e:
         return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -102,21 +102,18 @@ def add_room(request, player_id):
 @api_view(['POST'])
 def assign_guest(request, player_id):
     """Assign a waiting guest to an available room"""
-    print(player_id)
     try:
         guest_id = request.data.get('guest_id')
-        print(guest_id)
         room_id = request.data.get('room_id')
-        print(room_id)
         if not guest_id or not room_id:
             return Response(
                 {"response": "error", 'error': 'guest_id and room_id are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        game_state = GameService.assign_guest_to_room(player_id, int(guest_id), int(room_id))
-        serialize_and_publish(game_state, player_id)
-        return Response({"response": "ok"})
+        GameService.assign_guest_to_room(player_id, int(guest_id), int(room_id))
+        #serialize_and_publish(game_state, player_id)
+        return Response({"response": "ok", "params": {"guest_id":guest_id, "room_id": room_id}})
     except ValueError as e:
         return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
@@ -128,7 +125,7 @@ def clean_room(request, player_id, room_id):
     """Clean a specific room"""
     try:
         game_state = GameService.clean_room(player_id, room_id)
-        serialize_and_publish(game_state,player_id)
+        #serialize_and_publish(game_state,player_id)
         return Response({"response": "ok"})
     except ValueError as e:
         return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -141,7 +138,7 @@ def purchase_upgrade(request, player_id, upgrade_id):
     """Purchase an upgrade"""
     try:
         game_state = GameService.purchase_upgrade(player_id, upgrade_id)
-        serialize_and_publish(game_state, player_id)
+        #serialize_and_publish(game_state, player_id)
         return Response({"response": "ok"})
 
     except ValueError as e:
@@ -155,7 +152,7 @@ def unlock_recipe(request, player_id, recipe_id):
     """Unlock a recipe"""
     try:
         game_state = GameService.unlock_recipe(player_id, recipe_id)
-        serialize_and_publish(game_state, player_id)
+        #serialize_and_publish(game_state, player_id)
         return Response({"response": "ok"})
     except ValueError as e:
         return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -174,7 +171,7 @@ def craft_item(request, player_id):
             return Response({"response": "error", 'error': 'item_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         game_state = GameService.craft_item(player_id, item_id, quantity)
-        serialize_and_publish(game_state, player_id)
+        #serialize_and_publish(game_state, player_id)
         return Response({"response": "ok"})
     except ValueError as e:
         return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -193,7 +190,7 @@ def serve_guest(request, player_id):
             return Response({"response": "error", 'error': 'guest_id and item_id are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         game_state = GameService.serve_guest(player_id, guest_id, item_id)
-        serialize_and_publish(game_state, player_id)
+        #serialize_and_publish(game_state, player_id)
         return Response({"response": "ok"})
     except ValueError as e:
         return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -215,7 +212,7 @@ def purchase_ingredient(request, player_id):
             return Response({"response": "error", 'error': 'quantity must be a positive integer'}, status=status.HTTP_400_BAD_REQUEST)
 
         game_state = GameService.purchase_ingredient(player_id, ingredient_id, quantity)
-        serialize_and_publish(game_state, player_id)
+        #serialize_and_publish(game_state, player_id)
         return Response({"response": "ok"})
     except ValueError as e:
         return Response({"response": "error", 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -237,7 +234,7 @@ def experiment_with_ingredients(request, player_id):
         # Serialize game state
         game_state = result.pop('game_state')
         serializer = GameStateSerializer(game_state)
-        serialize_and_publish(game_state, player_id)
+        #serialize_and_publish(game_state, player_id)
 
         # Return result with serialized game state
 

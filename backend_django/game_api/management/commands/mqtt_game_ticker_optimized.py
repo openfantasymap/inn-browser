@@ -193,19 +193,19 @@ class Command(BaseCommand):
 
         if active_hours > 0:
             cutoff = timezone.now() - timedelta(hours=active_hours)
-            queryset = queryset.filter(last_tick__gte=cutoff)
+            queryset = queryset.filter(last_update__gte=cutoff)
 
-        # Order by last_tick to prioritize recently active games
-        queryset = queryset.order_by('-last_tick')[:limit]
+        # Order by last_update to prioritize recently active games
+        queryset = queryset.order_by('-last_update')[:limit]
 
         # Use select_related and prefetch_related for optimization
         return queryset.select_related().prefetch_related(
             'rooms',
             'guests',
-            'upgradetemplates',
-            'tavernitems',
-            'recipes',
-            'ingredients'
+            #'upgradetemplates',
+            #'tavernitems',
+            #'recipes',
+            #'ingredients'
         )
 
     def _signal_handler(self, signum, frame):

@@ -57,7 +57,7 @@ class GameService:
     ]
 
     @staticmethod
-    @transaction.atomic
+    #@transaction.atomic
     def create_or_get_game_state(player_id: str) -> GameState:
         """Create a new game state or get existing one"""
         game_state, created = GameState.objects.get_or_create(
@@ -142,7 +142,7 @@ class GameService:
         game_state.save()
 
     @staticmethod
-    @transaction.atomic
+    ##@transaction.atomic
     def process_tick(player_id: str) -> GameState:
         """Process one game tick"""
         game_state = GameService.create_or_get_game_state(player_id)
@@ -429,7 +429,7 @@ class GameService:
         }
 
     @staticmethod
-    @transaction.atomic
+    #@transaction.atomic
     def add_room(player_id: str, room_type: str = 'basic') -> GameState:
         """Add a new room to the inn"""
         game_state = GameService.create_or_get_game_state(player_id)
@@ -469,7 +469,7 @@ class GameService:
         return game_state
 
     @staticmethod
-    @transaction.atomic
+    #@transaction.atomic
     def assign_guest_to_room(player_id: str, guest_id: int, room_id: int) -> GameState:
         """Assign a waiting guest to an available room"""
         game_state = GameService.create_or_get_game_state(player_id)
@@ -505,7 +505,7 @@ class GameService:
         return game_state
 
     @staticmethod
-    @transaction.atomic
+    #@transaction.atomic
     def clean_room(player_id: str, room_id: str) -> GameState:
         """Clean a specific room"""
         game_state = GameService.create_or_get_game_state(player_id)
@@ -520,7 +520,7 @@ class GameService:
         return game_state
 
     @staticmethod
-    @transaction.atomic
+    #@transaction.atomic
     def purchase_upgrade(player_id: str, upgrade_id: str) -> GameState:
         """Purchase an upgrade"""
         game_state = GameService.create_or_get_game_state(player_id)
@@ -563,7 +563,7 @@ class GameService:
         return game_state
 
     @staticmethod
-    @transaction.atomic
+    ##@transaction.atomic
     def unlock_recipe(player_id: str, recipe_id: str) -> GameState:
         """Unlock a recipe (after discovering it)"""
         game_state = GameService.create_or_get_game_state(player_id)
@@ -592,7 +592,7 @@ class GameService:
         return game_state
 
     @staticmethod
-    @transaction.atomic
+    #@transaction.atomic
     def craft_item(player_id: str, item_id: str, quantity: int = 1) -> GameState:
         """Craft tavern items using unlocked recipes"""
         game_state = GameService.create_or_get_game_state(player_id)
@@ -642,7 +642,7 @@ class GameService:
         return game_state
 
     @staticmethod
-    @transaction.atomic
+    #@transaction.atomic
     def serve_guest(player_id: str, guest_id: str, item_id: str) -> GameState:
         """Serve food or drink to a guest"""
         game_state = GameService.create_or_get_game_state(player_id)
@@ -685,7 +685,7 @@ class GameService:
         return game_state
 
     @staticmethod
-    @transaction.atomic
+    #@transaction.atomic
     def purchase_ingredient(player_id: str, ingredient_id: str, quantity: int = 1) -> GameState:
         """Purchase ingredients from the store (only common and uncommon)"""
         game_state = GameService.create_or_get_game_state(player_id)
@@ -719,7 +719,7 @@ class GameService:
         return game_state
 
     @staticmethod
-    @transaction.atomic
+    #@transaction.atomic
     def experiment_with_ingredients(player_id: str, ingredient_ids: list) -> dict:
         """
         Experiment with ingredient combinations to discover recipes.
