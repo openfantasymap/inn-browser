@@ -413,8 +413,8 @@ class UpgradeTemplateAdmin(admin.ModelAdmin):
 
     def cost_display(self, obj):
         if obj.is_premium:
-            return format_html('<strong>${:.2f}</strong>', obj.premium_price_cents / 100)
-        return format_html('{:.0f}g', obj.cost)
+            return format_html('<strong>${}</strong>', obj.premium_price_cents / 100)
+        return format_html('{}g', obj.cost)
     cost_display.short_description = 'Cost'
 
     def effect_display(self, obj):
@@ -427,9 +427,9 @@ class UpgradeTemplateAdmin(admin.ModelAdmin):
             return format_html('<span style="color: green;">♾️ Permanent</span>')
         hours = obj.duration_seconds / 3600
         if hours >= 1:
-            return format_html('<span style="color: orange;">⏱️ {:.1f}h</span>', hours)
+            return format_html('<span style="color: orange;">⏱️ {}h</span>', hours)
         minutes = obj.duration_seconds / 60
-        return format_html('<span style="color: orange;">⏱️ {:.0f}m</span>', minutes)
+        return format_html('<span style="color: orange;">⏱️ {}m</span>', minutes)
     duration_display.short_description = 'Duration'
 
     def instance_count(self, obj):

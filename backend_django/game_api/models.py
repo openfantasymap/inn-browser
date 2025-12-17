@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+from django_lifecycle import LifecycleModelMixin, hook
 
 class RoomType(models.TextChoices):
     BASIC = 'basic', 'Basic'
@@ -315,7 +316,7 @@ class RecipeTemplate(models.Model):
 # GAME STATE AND PLAYER-SPECIFIC MODELS
 # ============================================================================
 
-class GameState(models.Model):
+class GameState(LifecycleModelMixin, models.Model):
     """Main game state for a player"""
     player_id = models.CharField(max_length=100, unique=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -355,6 +356,19 @@ class GameState(models.Model):
 
     def __str__(self):
         return f"Game State: {self.player_id} (Gold: {self.gold:.0f})"
+
+
+    #@hook('after_update')
+    #def on_after_update(obj):
+    #    from game_api.serializers import GameStateSerializer
+    #    from game_api.mqtt_service import get_mqtt_service
+    #    mqtt_service = get_mqtt_service()
+    #    serializer = GameStateSerializer(obj)
+    #    data = serializer.data
+    #    mqtt_service.publish_game_state(obj.player_id, data)
+
+
+
 
 
 class ActiveBuff(models.Model):

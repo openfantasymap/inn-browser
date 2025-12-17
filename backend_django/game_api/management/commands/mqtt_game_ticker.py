@@ -48,7 +48,6 @@ class Command(BaseCommand):
         active_only = options['active_only']
         player_id = options['player_id']
 
-        mqtt_service = get_mqtt_service()
 
         self.stdout.write(self.style.SUCCESS(f'Starting MQTT game ticker (interval: {interval}s)'))
 
@@ -84,6 +83,8 @@ class Command(BaseCommand):
                     try:
                         # Process tick for this game state
                         updated_state = GameService.process_tick(game_state.player_id)
+
+                        mqtt_service = get_mqtt_service()
 
                         # Serialize and publish via MQTT
                         serializer = GameStateSerializer(updated_state)
@@ -139,8 +140,8 @@ class Command(BaseCommand):
         return queryset.select_related().prefetch_related(
             'rooms',
             'guests',
-            'upgradetemplates',
-            'tavernitems',
-            'recipes',
-            'ingredients'
+            #'upgradetemplates',
+            #'tavernitems',
+            #'recipes',
+            #'ingredients'
         )
