@@ -31,6 +31,7 @@
   <!-- Tab Navigation -->
   <app-tab-navigation
     [activeTab]="activeTab"
+    [guests] = "getWaitingGuests().length"
     (tabChange)="switchTab($event)">
   </app-tab-navigation>
 

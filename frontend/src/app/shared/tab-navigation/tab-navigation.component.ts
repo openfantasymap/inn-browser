@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 })
 export class TabNavigationComponent {
   @Input() activeTab: 'inn' | 'tavern' = 'inn';
+  @Input() guests: number = 0;
   @Output() tabChange = new EventEmitter<'inn' | 'tavern'>();
 
   switchTab(tab: 'inn' | 'tavern'): void {
