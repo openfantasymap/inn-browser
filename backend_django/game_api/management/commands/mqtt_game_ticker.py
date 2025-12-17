@@ -86,6 +86,15 @@ class Command(BaseCommand):
 
                         mqtt_service = get_mqtt_service()
 
+                        # Optimize queryset to avoid N+1 queries - refresh with prefetch_related
+                        updated_state = GameState.objects.prefetch_related(
+                            'rooms',
+                            'guests',
+                            'player_recipes__item',
+                            'purchased_upgrades__upgrade_template',
+                            'active_buffs__upgrade_template'
+                        ).get(player_id=game_state.player_id)
+
                         # Serialize and publish via MQTT
                         serializer = GameStateSerializer(updated_state)
                         data = serializer.data
@@ -137,11 +146,10 @@ class Command(BaseCommand):
             cutoff = timezone.now() - timedelta(hours=24)
             queryset = queryset.filter(last_tick__gte=cutoff)
 
-        return queryset.select_related().prefetch_related(
+        return queryset.prefetch_related(
             'rooms',
             'guests',
-            #'upgradetemplates',
-            #'tavernitems',
-            #'recipes',
-            #'ingredients'
+            'player_recipes__item',
+            'purchased_upgrades__upgrade_template',
+            'active_buffs__upgrade_template'
         )

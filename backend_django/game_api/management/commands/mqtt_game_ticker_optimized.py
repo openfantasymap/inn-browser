@@ -176,6 +176,15 @@ class Command(BaseCommand):
             # Process tick
             updated_state = GameService.process_tick(player_id)
 
+            # Optimize queryset to avoid N+1 queries - refresh with prefetch_related
+            updated_state = GameState.objects.prefetch_related(
+                'rooms',
+                'guests',
+                'player_recipes__item',
+                'purchased_upgrades__upgrade_template',
+                'active_buffs__upgrade_template'
+            ).get(player_id=player_id)
+
             # Serialize and publish
             serializer = GameStateSerializer(updated_state)
             data = serializer.data
@@ -198,14 +207,13 @@ class Command(BaseCommand):
         # Order by last_update to prioritize recently active games
         queryset = queryset.order_by('-last_update')[:limit]
 
-        # Use select_related and prefetch_related for optimization
-        return queryset.select_related().prefetch_related(
+        # Use prefetch_related for optimization
+        return queryset.prefetch_related(
             'rooms',
             'guests',
-            #'upgradetemplates',
-            #'tavernitems',
-            #'recipes',
-            #'ingredients'
+            'player_recipes__item',
+            'purchased_upgrades__upgrade_template',
+            'active_buffs__upgrade_template'
         )
 
     def _signal_handler(self, signum, frame):

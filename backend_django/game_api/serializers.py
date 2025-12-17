@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.core.cache import cache
 from .models import (
     GameState, Room, Guest, TavernItem, Ingredient, PlayerRecipe, Upgrade, UpgradeTemplate,
     ActiveBuff, PremiumPurchase
@@ -193,14 +194,28 @@ class GameStateSerializer(serializers.ModelSerializer):
         }
 
     def get_tavern_items(self, obj):
-        """Get all available tavern items"""
+        """Get all available tavern items (cached for 1 hour)"""
+        cache_key = 'all_tavern_items_serialized'
+        cached_data = cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+
         items = TavernItem.objects.all()
-        return TavernItemSerializer(items, many=True).data
+        data = TavernItemSerializer(items, many=True).data
+        cache.set(cache_key, data, timeout=3600)  # Cache for 1 hour
+        return data
 
     def get_available_ingredients(self, obj):
-        """Get all available ingredients"""
+        """Get all available ingredients (cached for 1 hour)"""
+        cache_key = 'all_ingredients_serialized'
+        cached_data = cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+
         ingredients = Ingredient.objects.all()
-        return IngredientSerializer(ingredients, many=True).data
+        data = IngredientSerializer(ingredients, many=True).data
+        cache.set(cache_key, data, timeout=3600)  # Cache for 1 hour
+        return data
 
     def get_recipes(self, obj):
         """Get player's recipes (discovered and unlocked)"""
@@ -219,7 +234,12 @@ class GameStateSerializer(serializers.ModelSerializer):
         return GameService.calculate_buff_multipliers(obj)
 
     def get_premium_upgrades(self, obj):
-        """Get all premium upgrade templates (purchasable with real money)"""
+        """Get all premium upgrade templates (cached for 1 hour)"""
+        cache_key = 'all_premium_upgrades_serialized'
+        cached_data = cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+
         premium_templates = UpgradeTemplate.objects.filter(is_premium=True)
         premium_data = []
 
@@ -237,17 +257,25 @@ class GameStateSerializer(serializers.ModelSerializer):
                 'is_consumable': template.is_consumable
             })
 
+        cache.set(cache_key, premium_data, timeout=3600)  # Cache for 1 hour
         return premium_data
 
     def get_upgrades(self, obj):
         """Get all upgrade templates with purchase status for this player (non-premium only)"""
-        all_templates = UpgradeTemplate.objects.filter(is_premium=False)
+        # Cache non-premium upgrade templates (static data)
+        cache_key = 'all_non_premium_upgrade_templates'
+        all_templates = cache.get(cache_key)
+        if all_templates is None:
+            all_templates = list(UpgradeTemplate.objects.filter(is_premium=False))
+            cache.set(cache_key, all_templates, timeout=3600)  # Cache for 1 hour
+
+        # Fetch all purchases at once to avoid N+1 queries
+        purchases = obj.purchased_upgrades.select_related('upgrade_template').all()
+        purchases_dict = {p.upgrade_template.upgrade_id: p for p in purchases}
+
         upgrades_data = []
-
         for template in all_templates:
-            # Check if this upgrade has been purchased by this player
-            purchase = obj.purchased_upgrades.filter(upgrade_template=template).first()
-
+            purchase = purchases_dict.get(template.upgrade_id)
             upgrades_data.append({
                 'id': template.upgrade_id,  # Frontend expects 'id'
                 'purchased': purchase is not None,

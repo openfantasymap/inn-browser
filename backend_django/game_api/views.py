@@ -15,12 +15,20 @@ from .models import UpgradeTemplate, GameState
 # Configure Stripe
 stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', 'sk_test_placeholder')
 
-# Get MQTT service instance
+# Get MQTT service instance (commented out - uncomment when MQTT is needed)
 #mqtt_service = get_mqtt_service()
 #
-#
 #def serialize_and_publish(game_state, player_id, mqtt_service=mqtt_service):
-#    """Helper to serialize game state and publish via MQTT"""
+#    """Helper to serialize game state and publish via MQTT (optimized with prefetch_related)"""
+#    # Optimize queryset to avoid N+1 queries - refresh game_state with prefetch_related
+#    game_state = GameState.objects.prefetch_related(
+#        'rooms',
+#        'guests',
+#        'player_recipes__item',
+#        'purchased_upgrades__upgrade_template',
+#        'active_buffs__upgrade_template'
+#    ).get(player_id=player_id)
+#
 #    serializer = GameStateSerializer(game_state)
 #    data = serializer.data
 #
