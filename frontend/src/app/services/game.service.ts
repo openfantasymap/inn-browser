@@ -81,6 +81,8 @@ export class GameService {
       //@ts-ignore
       this.state.rooms.filter(x=>x.id === response.params.room_id)[0].current_guest = response.params.guest_id;
       //@ts-ignore
+      this.state.rooms.filter(x=>x.id === response.params.room_id)[0].occupied = true;
+      //@ts-ignore
       this.state.guests.filter(x=>x.id === response.params.guest_id)[0].room_id = response.params.room_id;
       this.gameStateSubject.next(this.state);
 
