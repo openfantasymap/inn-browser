@@ -6,7 +6,7 @@ import { LoginComponent } from './core/auth/login/login.component';
 import { HeaderComponent } from './shared/header/header.component';
 import { ResourcesPanelComponent } from './shared/resources-panel/resources-panel.component';
 import { TabNavigationComponent } from './shared/tab-navigation/tab-navigation.component';
-import { InnState, Room, Guest, Upgrade, RoomType, TavernItem, Recipe, ItemType, ItemQuality, Ingredient, ExperimentResult } from './models/game.models';
+import { InnState, Room, Guest, Upgrade, RoomType, TavernItem, Recipe, ItemType, ItemQuality, Ingredient, ExperimentResult, PlayerAchievement } from './models/game.models';
 
 @Component({
   selector: 'app-root',
@@ -37,6 +37,11 @@ export class AppComponent implements OnInit, OnDestroy {
   // Offline notification state
   offlineNotificationDismissed: boolean = false;
 
+  // Achievement notifications
+  achievementNotifications: Array<{achievement: PlayerAchievement, id: number}> = [];
+  private nextNotificationId = 0;
+  private previousAchievements: Map<string, boolean> = new Map();
+
   // Drag and drop state
   draggedGuest: Guest | null = null;
   dragOverRoomId: string | null = null;
@@ -63,11 +68,51 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private initializeGame(): void {
     this.gameService.gameState$.subscribe(state => {
-      this.gameState = state;
+      if (state) {
+        // Check for newly completed achievements
+        this.checkForNewAchievements(state);
+        this.gameState = state;
+      }
     });
 
     // Initial game state fetch - updates will come via MQTT
     this.gameService.getGameState().subscribe();
+  }
+
+  private checkForNewAchievements(newState: InnState): void {
+    if (!newState.achievements) return;
+
+    newState.achievements.forEach(playerAchievement => {
+      const achievementId = playerAchievement.achievement.id;
+      const wasCompleted = this.previousAchievements.get(achievementId);
+      const isNowCompleted = playerAchievement.is_completed;
+
+      // If achievement was not completed before but is now, show notification
+      if (!wasCompleted && isNowCompleted) {
+        this.showAchievementNotification(playerAchievement);
+      }
+
+      // Update the tracking map
+      this.previousAchievements.set(achievementId, isNowCompleted);
+    });
+  }
+
+  private showAchievementNotification(achievement: PlayerAchievement): void {
+    const notification = {
+      achievement,
+      id: this.nextNotificationId++
+    };
+
+    this.achievementNotifications.push(notification);
+
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+      this.dismissAchievementNotification(notification.id);
+    }, 5000);
+  }
+
+  dismissAchievementNotification(id: number): void {
+    this.achievementNotifications = this.achievementNotifications.filter(n => n.id !== id);
   }
 
   ngOnDestroy(): void {

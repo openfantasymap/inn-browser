@@ -28,6 +28,26 @@
     </div>
   </div>
 
+  <!-- Achievement Notifications -->
+  <div class="achievement-notifications">
+    <div class="achievement-notification" *ngFor="let notification of achievementNotifications">
+      <div class="notification achievement-unlocked">
+        <span class="notification-icon achievement-icon">{{ notification.achievement.achievement.icon }}</span>
+        <div class="notification-content">
+          <div class="achievement-title">🎉 Achievement Unlocked!</div>
+          <div class="achievement-name">{{ notification.achievement.achievement.name }}</div>
+          <div class="achievement-description">{{ notification.achievement.achievement.description }}</div>
+          <div class="achievement-reward" *ngIf="notification.achievement.achievement.reward_upgrade_name">
+            <span class="reward-label">Reward:</span> {{ notification.achievement.achievement.reward_upgrade_name }}
+          </div>
+        </div>
+        <button class="notification-close" (click)="dismissAchievementNotification(notification.id)" title="Dismiss">
+          ✕
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Tab Navigation -->
   <app-tab-navigation
     [activeTab]="activeTab"
