@@ -257,6 +257,9 @@ class UpgradeTemplate(models.Model):
     effect_type = models.CharField(max_length=50)
     effect_value = models.FloatField(default=0.0)
 
+    # Operational costs (like paying workers)
+    operational_cost_per_tick = models.FloatField(default=0.0)  # Gold cost per game tick
+
     # Premium/monetization fields
     is_premium = models.BooleanField(default=False)  # Requires real money purchase
     premium_price_cents = models.IntegerField(default=0)  # Price in USD cents (e.g., 99 = $0.99)

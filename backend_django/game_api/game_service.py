@@ -182,6 +182,18 @@ class GameService:
                         guest.patience = max(0, guest.patience - 1.0)
                         guest.save()
 
+        # Deduct operational costs for purchased upgrades (like paying workers)
+        total_operational_cost = 0
+        for upgrade in game_state.purchased_upgrades.select_related('upgrade_template').all():
+            # Only deduct costs for permanent upgrades (not temporary buffs)
+            if upgrade.upgrade_template.duration_seconds == 0:
+                total_operational_cost += upgrade.upgrade_template.operational_cost_per_tick
+
+        game_state.gold -= total_operational_cost
+        # Don't let gold go negative from operational costs
+        if game_state.gold < 0:
+            game_state.gold = 0
+
         # Auto-clean if enabled
         if game_state.auto_clean_enabled:
             for room in game_state.rooms.all():

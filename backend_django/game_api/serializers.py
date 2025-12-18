@@ -120,6 +120,7 @@ class UpgradeTemplateSerializer(serializers.Serializer):
     cost = serializers.FloatField(read_only=True)
     effect_type = serializers.CharField(read_only=True)
     effect_value = serializers.FloatField(read_only=True)
+    operational_cost_per_tick = serializers.FloatField(read_only=True)
     purchased = serializers.BooleanField(read_only=True)
     purchased_at = serializers.DateTimeField(read_only=True, allow_null=True)
 

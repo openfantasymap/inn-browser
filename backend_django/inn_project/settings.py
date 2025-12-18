@@ -70,7 +70,7 @@ DATABASES = {
         "USER": "admin",
         "PASSWORD": "85af6f3f99864132343a5f0434a12944edc",
         "OPTIONS": {
-            "pool": True,
+            # "pool": True,  # Commented out - requires psycopg-pool
             "server_side_binding": True,
         }
     }

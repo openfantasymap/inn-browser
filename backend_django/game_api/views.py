@@ -56,6 +56,7 @@ def get_upgrades(request):
                 'cost': template.cost,
                 'effect_type': template.effect_type,
                 'effect_value': template.effect_value,
+                'operational_cost_per_tick': template.operational_cost_per_tick,
                 'purchased': False,
                 'purchased_at': None,
                 'is_premium': template.is_premium,

@@ -80,26 +80,29 @@ class Command(BaseCommand):
             {
                 'upgrade_id': 'upgrade_income_1',
                 'name': 'Income Boost I',
-                'description': 'Increase income from all sources by 50%',
+                'description': 'Increase income from all sources by 50% (costs 5 gold/tick to maintain)',
                 'cost': 200.0,
                 'effect_type': 'income_multiplier',
-                'effect_value': 1.5
+                'effect_value': 1.5,
+                'operational_cost_per_tick': 5.0  # Paying better staff
             },
             {
                 'upgrade_id': 'upgrade_auto_clean',
                 'name': 'Auto-Maintenance',
-                'description': 'Automatically maintain facilities over time',
+                'description': 'Automatically maintain facilities over time (costs 3 gold/tick for cleaning crew)',
                 'cost': 300.0,
                 'effect_type': 'auto_clean',
-                'effect_value': 1.0
+                'effect_value': 1.0,
+                'operational_cost_per_tick': 3.0  # Paying cleaning crew
             },
             {
                 'upgrade_id': 'upgrade_capacity_1',
                 'name': 'Capacity Expansion I',
-                'description': 'Increase max capacity by 5',
+                'description': 'Increase max capacity by 5 (costs 2 gold/tick overhead)',
                 'cost': 400.0,
                 'effect_type': 'guest_capacity',
-                'effect_value': 5.0
+                'effect_value': 5.0,
+                'operational_cost_per_tick': 2.0  # More guest overhead
             },
             {
                 'upgrade_id': 'upgrade_room_standard',
@@ -107,15 +110,17 @@ class Command(BaseCommand):
                 'description': 'Unlock the ability to build Tier 2 facilities (2x income)',
                 'cost': 500.0,
                 'effect_type': 'unlock_room',
-                'effect_value': 2.0
+                'effect_value': 2.0,
+                'operational_cost_per_tick': 0.0  # One-time unlock, no ongoing cost
             },
             {
                 'upgrade_id': 'upgrade_income_2',
                 'name': 'Income Boost II',
-                'description': 'Increase income from all sources by 100%',
+                'description': 'Increase income from all sources by 100% (costs 12 gold/tick to maintain)',
                 'cost': 1000.0,
                 'effect_type': 'income_multiplier',
-                'effect_value': 2.0
+                'effect_value': 2.0,
+                'operational_cost_per_tick': 12.0  # Higher tier staff
             },
             {
                 'upgrade_id': 'upgrade_room_deluxe',
@@ -123,7 +128,8 @@ class Command(BaseCommand):
                 'description': 'Unlock the ability to build Tier 3 facilities (4x income)',
                 'cost': 2000.0,
                 'effect_type': 'unlock_room',
-                'effect_value': 4.0
+                'effect_value': 4.0,
+                'operational_cost_per_tick': 0.0  # One-time unlock, no ongoing cost
             },
             {
                 'upgrade_id': 'upgrade_feature_market',
@@ -131,7 +137,8 @@ class Command(BaseCommand):
                 'description': 'Unlock the marketplace to trade resources and craft items',
                 'cost': 150.0,
                 'effect_type': 'unlock_tavern',  # Generic feature unlock
-                'effect_value': 1.0
+                'effect_value': 1.0,
+                'operational_cost_per_tick': 0.0  # One-time unlock, no ongoing cost
             },
             {
                 'upgrade_id': 'upgrade_room_royal',
@@ -139,7 +146,8 @@ class Command(BaseCommand):
                 'description': 'Unlock the ability to build Tier 4 facilities (8x income)',
                 'cost': 5000.0,
                 'effect_type': 'unlock_room',
-                'effect_value': 8.0
+                'effect_value': 8.0,
+                'operational_cost_per_tick': 0.0  # One-time unlock, no ongoing cost
             },
         ]
 
