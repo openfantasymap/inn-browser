@@ -79,8 +79,8 @@ class Command(BaseCommand):
         upgrade_templates = [
             {
                 'upgrade_id': 'upgrade_income_1',
-                'name': 'Income Boost I',
-                'description': 'Increase income from all sources by 50% (costs 5 gold/tick to maintain)',
+                'name': 'Hire Expert Barkeep',
+                'description': 'An experienced barkeep increases your reputation and service quality (+50% income, 5 gold/tick salary)',
                 'cost': 200.0,
                 'effect_type': 'income_multiplier',
                 'effect_value': 1.5,
@@ -88,8 +88,8 @@ class Command(BaseCommand):
             },
             {
                 'upgrade_id': 'upgrade_auto_clean',
-                'name': 'Auto-Maintenance',
-                'description': 'Automatically maintain facilities over time (costs 3 gold/tick for cleaning crew)',
+                'name': 'Summon House Sprites',
+                'description': 'Magical sprites keep your inn spotless while you focus on guests (3 gold/tick for enchanted brooms)',
                 'cost': 300.0,
                 'effect_type': 'auto_clean',
                 'effect_value': 1.0,
@@ -97,8 +97,8 @@ class Command(BaseCommand):
             },
             {
                 'upgrade_id': 'upgrade_capacity_1',
-                'name': 'Capacity Expansion I',
-                'description': 'Increase max capacity by 5 (costs 2 gold/tick overhead)',
+                'name': 'Build Guest Registry',
+                'description': 'Hire a doorkeeper to manage more guests efficiently (+5 capacity, 2 gold/tick salary)',
                 'cost': 400.0,
                 'effect_type': 'guest_capacity',
                 'effect_value': 5.0,
@@ -106,8 +106,8 @@ class Command(BaseCommand):
             },
             {
                 'upgrade_id': 'upgrade_room_standard',
-                'name': 'Unlock Tier 2',
-                'description': 'Unlock the ability to build Tier 2 facilities (2x income)',
+                'name': 'Learn Stone Masonry',
+                'description': 'Master the art of stone construction to build superior rooms with 2x income potential',
                 'cost': 500.0,
                 'effect_type': 'unlock_room',
                 'effect_value': 2.0,
@@ -115,8 +115,8 @@ class Command(BaseCommand):
             },
             {
                 'upgrade_id': 'upgrade_income_2',
-                'name': 'Income Boost II',
-                'description': 'Increase income from all sources by 100% (costs 12 gold/tick to maintain)',
+                'name': 'Legendary Hospitality',
+                'description': 'Hire a master chef and renowned entertainers to double your income (+100%, 12 gold/tick salaries)',
                 'cost': 1000.0,
                 'effect_type': 'income_multiplier',
                 'effect_value': 2.0,
@@ -124,8 +124,8 @@ class Command(BaseCommand):
             },
             {
                 'upgrade_id': 'upgrade_room_deluxe',
-                'name': 'Unlock Tier 3',
-                'description': 'Unlock the ability to build Tier 3 facilities (4x income)',
+                'name': 'Master Architecture',
+                'description': 'Study advanced architectural techniques to build luxurious suites with 4x income potential',
                 'cost': 2000.0,
                 'effect_type': 'unlock_room',
                 'effect_value': 4.0,
@@ -133,8 +133,8 @@ class Command(BaseCommand):
             },
             {
                 'upgrade_id': 'upgrade_feature_market',
-                'name': 'Unlock Marketplace',
-                'description': 'Unlock the marketplace to trade resources and craft items',
+                'name': 'Establish Tavern Kitchen',
+                'description': 'Set up a proper kitchen to craft delicious meals and beverages for your guests',
                 'cost': 150.0,
                 'effect_type': 'unlock_tavern',  # Generic feature unlock
                 'effect_value': 1.0,
@@ -142,8 +142,8 @@ class Command(BaseCommand):
             },
             {
                 'upgrade_id': 'upgrade_room_royal',
-                'name': 'Unlock Tier 4',
-                'description': 'Unlock the ability to build Tier 4 facilities (8x income)',
+                'name': 'Royal Engineering Secrets',
+                'description': 'Learn palace construction techniques to build opulent royal suites with 8x income potential',
                 'cost': 5000.0,
                 'effect_type': 'unlock_room',
                 'effect_value': 8.0,
