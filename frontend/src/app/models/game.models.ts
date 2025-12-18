@@ -191,6 +191,13 @@ export interface Upgrade {
   purchased: boolean;
   effect_type: string;
   effect_value: number;
+  operational_cost_per_tick?: number;
+  // Premium upgrade fields
+  is_premium?: boolean;
+  premium_price_cents?: number;
+  premium_price_usd?: number;
+  duration_seconds?: number;
+  is_consumable?: boolean;
 }
 
 export interface Resources {
@@ -247,4 +254,5 @@ export interface InnState {
   offline_progress: OfflineProgress;
   max_offline_hours: number;
   achievements: PlayerAchievement[];
+  premium_upgrades: Upgrade[];
 }

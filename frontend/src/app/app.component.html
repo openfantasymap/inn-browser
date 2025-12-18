@@ -260,6 +260,29 @@
           </div>
         </div>
       }
+
+      @if(activeUpgradeTab === 'premium'){
+        <div class="upgrades-list">
+          <div *ngFor="let upgrade of getPremiumUpgrades()"
+               class="upgrade-card premium-upgrade">
+            <div class="upgrade-header">
+              <span class="upgrade-name">{{ upgrade.name }}</span>
+              <span class="upgrade-cost premium-price">
+                ${{ upgrade.premium_price_usd?.toFixed(2) || '0.00' }}
+              </span>
+            </div>
+            <p class="upgrade-description">{{ upgrade.description }}</p>
+            <div class="premium-details">
+              <span class="premium-duration">⏱️ Duration: {{ (upgrade.duration_seconds || 0) / 3600 }}h</span>
+              <span class="premium-effect">✨ {{ upgrade.effect_type }}: +{{ (upgrade.effect_value || 0) * 100 - 100 }}%</span>
+            </div>
+            <button class="purchase-btn premium-btn"
+                    (click)="purchasePremiumUpgrade(upgrade)">
+              💳 Purchase with Stripe
+            </button>
+          </div>
+        </div>
+      }
       </div>
     </div>
   </div>

@@ -212,6 +212,12 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
+  purchasePremiumUpgrade(upgrade: Upgrade): void {
+    // TODO: Implement Stripe checkout flow
+    console.log('Premium upgrade purchase:', upgrade);
+    alert(`Premium purchase coming soon!\n\nUpgrade: ${upgrade.name}\nPrice: $${upgrade.premium_price_usd?.toFixed(2)}\n\nStripe integration will be implemented in a future update.`);
+  }
+
   buildRoom(roomType: RoomType): void {
     if (this.isRoomTypeUnlocked(roomType)) {
       this.gameService.buildRoom(roomType).subscribe();
@@ -581,5 +587,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   getAcquiredUpgrades(): Upgrade[] {
     return this.gameService.getAcquiredUpgrades(this.gameState);
+  }
+
+  getPremiumUpgrades(): Upgrade[] {
+    if (!this.gameState || !this.gameState.premium_upgrades) return [];
+    return this.gameState.premium_upgrades;
   }
 }
