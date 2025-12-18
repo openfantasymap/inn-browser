@@ -677,3 +677,62 @@ class Upgrade(models.Model):
 
     def __str__(self):
         return f"✓ {self.name}"
+
+
+# ============================================================================
+# ACHIEVEMENT MODELS
+# ============================================================================
+
+class Achievement(models.Model):
+    """Template defining achievement requirements and rewards"""
+    achievement_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+
+    # Requirement type determines what triggers this achievement
+    # Types: customers_served, customers_high_patience, customers_low_patience,
+    #        customers_race, customers_type, total_gold, total_rooms
+    requirement_type = models.CharField(max_length=50)
+    requirement_value = models.IntegerField(default=0)  # Threshold to reach (e.g., 100 customers)
+
+    # Additional requirements stored as JSON
+    # Examples: {"race": "elf"}, {"patience_min": 80}, {"guest_type": "noble"}
+    requirement_metadata = models.JSONField(default=dict, blank=True)
+
+    # Reward - upgrade that gets unlocked
+    reward_upgrade = models.ForeignKey(
+        UpgradeTemplate,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='unlocked_by_achievement'
+    )
+
+    # Display
+    icon = models.CharField(max_length=10, default='🏆')
+
+    class Meta:
+        verbose_name = "Achievement"
+        verbose_name_plural = "Achievements"
+        ordering = ['requirement_value']
+
+    def __str__(self):
+        return f"{self.icon} {self.name}"
+
+
+class PlayerAchievement(models.Model):
+    """Tracks which achievements a player has earned"""
+    game_state = models.ForeignKey(GameState, on_delete=models.CASCADE, related_name='achievements')
+    achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
+    earned_at = models.DateTimeField(auto_now_add=True)
+
+    # Progress tracking
+    progress = models.IntegerField(default=0)  # Current progress towards requirement_value
+
+    class Meta:
+        unique_together = ['game_state', 'achievement']
+        verbose_name = "Player Achievement"
+        verbose_name_plural = "Player Achievements"
+
+    def __str__(self):
+        return f"{self.game_state.player_id}: {self.achievement.name} ({self.progress}/{self.achievement.requirement_value})"

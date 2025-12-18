@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.core.cache import cache
 from .models import (
     GameState, Room, Guest, TavernItem, Ingredient, PlayerRecipe, Upgrade, UpgradeTemplate,
-    ActiveBuff, PremiumPurchase
+    ActiveBuff, PremiumPurchase, Achievement, PlayerAchievement
 )
 
 
@@ -136,6 +136,33 @@ class UpgradeTemplateSerializer(serializers.Serializer):
         return obj.premium_price_cents / 100 if hasattr(obj, 'premium_price_cents') else 0
 
 
+class AchievementSerializer(serializers.ModelSerializer):
+    """Serializer for Achievement"""
+    id = serializers.CharField(source='achievement_id', read_only=True)
+    reward_upgrade_id = serializers.CharField(source='reward_upgrade.upgrade_id', read_only=True, allow_null=True)
+    reward_upgrade_name = serializers.CharField(source='reward_upgrade.name', read_only=True, allow_null=True)
+
+    class Meta:
+        model = Achievement
+        fields = ['id', 'name', 'description', 'requirement_type', 'requirement_value',
+                  'requirement_metadata', 'icon', 'reward_upgrade_id', 'reward_upgrade_name']
+
+
+class PlayerAchievementSerializer(serializers.ModelSerializer):
+    """Serializer for PlayerAchievement with achievement details"""
+    achievement = AchievementSerializer(read_only=True)
+    earned_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    is_completed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PlayerAchievement
+        fields = ['achievement', 'progress', 'earned_at', 'is_completed']
+
+    def get_is_completed(self, obj):
+        """Check if achievement is completed"""
+        return obj.progress >= obj.achievement.requirement_value
+
+
 class GameStateSerializer(serializers.ModelSerializer):
     """Serializer for GameState model"""
     rooms = RoomSerializer(many=True, read_only=True)
@@ -156,6 +183,7 @@ class GameStateSerializer(serializers.ModelSerializer):
     inventory = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
     offline_progress = serializers.SerializerMethodField()
+    achievements = serializers.SerializerMethodField()
 
     class Meta:
         model = GameState
@@ -164,7 +192,7 @@ class GameStateSerializer(serializers.ModelSerializer):
                   'game_speed', 'last_update', 'tavern_unlocked',
                   'tavern_items', 'inventory', 'available_ingredients',
                   'location', 'offline_progress', 'max_offline_hours',
-                  'active_buffs', 'buff_multipliers', 'premium_upgrades']
+                  'active_buffs', 'buff_multipliers', 'premium_upgrades', 'achievements']
 
     def get_resources(self, obj):
         """Get resources in the format expected by Angular frontend"""
@@ -284,6 +312,11 @@ class GameStateSerializer(serializers.ModelSerializer):
             })
 
         return upgrades_data
+
+    def get_achievements(self, obj):
+        """Get all player achievements with progress"""
+        player_achievements = obj.achievements.select_related('achievement', 'achievement__reward_upgrade').all()
+        return PlayerAchievementSerializer(player_achievements, many=True).data
 
 
 class GameStateListSerializer(serializers.ModelSerializer):

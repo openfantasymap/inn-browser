@@ -9,7 +9,7 @@ from django.db import transaction
 from .models import (
     GameState, Room, Guest, TavernItem, Ingredient,
     PlayerRecipe, Upgrade, GuestType, GuestSpecies, RoomTypeTemplate, UpgradeTemplate, RecipeTemplate,
-    ActiveBuff, PremiumPurchase
+    ActiveBuff, PremiumPurchase, Achievement, PlayerAchievement
 )
 from .llm_service import get_llm_service
 
@@ -243,6 +243,9 @@ class GameService:
                     game_state.reputation += guest.reputation_bonus
                 elif guest.satisfaction < 30:
                     game_state.reputation -= abs(guest.reputation_bonus) * 0.5
+
+                # Check achievements for this guest
+                GameService.check_and_update_achievements(game_state, guest)
 
                 guests_to_remove.append(guest.id)
 
@@ -1023,3 +1026,64 @@ class GameService:
                 'message': f'Purchase recorded but activation failed: {activation_result["message"]}',
                 'purchase': purchase
             }
+
+    @staticmethod
+    def check_and_update_achievements(game_state: GameState, guest: Guest):
+        """Check if guest completion triggers any achievements"""
+        # Get all achievements
+        all_achievements = Achievement.objects.all()
+
+        for achievement in all_achievements:
+            # Get or create player achievement tracker
+            player_achievement, created = PlayerAchievement.objects.get_or_create(
+                game_state=game_state,
+                achievement=achievement,
+                defaults={'progress': 0}
+            )
+
+            # Skip if already earned
+            if player_achievement.progress >= achievement.requirement_value:
+                continue
+
+            # Check if this guest counts towards the achievement
+            counts = False
+            metadata = achievement.requirement_metadata
+
+            if achievement.requirement_type == 'customers_high_patience':
+                patience_min = metadata.get('patience_min', 0)
+                if guest.patience >= patience_min:
+                    counts = True
+
+            elif achievement.requirement_type == 'customers_low_patience':
+                patience_max = metadata.get('patience_max', 100)
+                if guest.patience <= patience_max:
+                    counts = True
+
+            elif achievement.requirement_type == 'customers_race':
+                required_race = metadata.get('race', '')
+                if guest.species.lower() == required_race.lower():
+                    counts = True
+
+            elif achievement.requirement_type == 'customers_type':
+                required_type = metadata.get('guest_type', '')
+                if guest.guest_type.lower() == required_type.lower():
+                    counts = True
+
+            # Update progress
+            if counts:
+                player_achievement.progress += 1
+                player_achievement.save()
+
+                # Check if achievement just completed
+                if player_achievement.progress == achievement.requirement_value:
+                    # Achievement earned!
+                    # If there's a reward upgrade, unlock it automatically
+                    if achievement.reward_upgrade:
+                        try:
+                            GameService.purchase_upgrade(
+                                game_state.player_id,
+                                achievement.reward_upgrade.upgrade_id
+                            )
+                        except ValueError:
+                            # Already purchased or can't afford - that's okay
+                            pass
