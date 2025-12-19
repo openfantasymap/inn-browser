@@ -723,7 +723,7 @@ class Achievement(models.Model):
 class PlayerAchievement(models.Model):
     """Tracks which achievements a player has earned"""
     game_state = models.ForeignKey(GameState, on_delete=models.CASCADE, related_name='achievements')
-    achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
+    achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE, related_name='player_achievements')
     earned_at = models.DateTimeField(auto_now_add=True)
 
     # Progress tracking
