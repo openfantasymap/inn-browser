@@ -1,29 +1,111 @@
 <div class="resources-panel">
-  <div class="resource">
+  <div class="resource resource-with-breakdown">
     <span class="resource-icon">💰</span>
     <span class="resource-label">Gold:</span>
     <span class="resource-value">{{ gameState.resources.gold | number:'1.0-0' }}</span>
+    <button class="breakdown-toggle" (click)="toggleIncomeBreakdown()" title="Show income breakdown">
+      {{ showIncomeBreakdown ? '▼' : 'ℹ️' }}
+    </button>
+
+    <div class="breakdown-tooltip" *ngIf="showIncomeBreakdown">
+      <h4>💰 Income Breakdown</h4>
+
+      <div class="breakdown-section">
+        <div class="breakdown-header">Guest Income (per tick)</div>
+        <div class="breakdown-item" *ngFor="let guest of getActiveGuests()">
+          <span class="breakdown-label">{{ guest.name }} ({{ guest.species }})</span>
+          <span class="breakdown-value">+{{ guest.gold_per_tick | number:'1.1-2' }}</span>
+        </div>
+        <div class="breakdown-total">
+          <span>Base Income:</span>
+          <span>{{ getTotalGuestIncome() | number:'1.1-2' }}/tick</span>
+        </div>
+      </div>
+
+      <div class="breakdown-section">
+        <div class="breakdown-header">Multiplier Applied</div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">Total Multiplier</span>
+          <span class="breakdown-value">×{{ gameState.total_income_multiplier | number:'1.1-1' }}</span>
+        </div>
+        <div class="breakdown-total">
+          <span>Income After Multiplier:</span>
+          <span>{{ getTotalGuestIncome() * gameState.total_income_multiplier | number:'1.1-2' }}/tick</span>
+        </div>
+      </div>
+
+      <div class="breakdown-section" *ngIf="getTotalOperationalCost() > 0">
+        <div class="breakdown-header">Operational Costs</div>
+        <div class="breakdown-item" *ngFor="let upgrade of gameState.purchased_upgrades">
+          <ng-container *ngIf="upgrade.purchased && upgrade.operational_cost_per_tick && upgrade.operational_cost_per_tick > 0">
+            <span class="breakdown-label">{{ upgrade.name }}</span>
+            <span class="breakdown-value cost">-{{ upgrade.operational_cost_per_tick | number:'1.1-2' }}</span>
+          </ng-container>
+        </div>
+        <div class="breakdown-total cost">
+          <span>Total Costs:</span>
+          <span>-{{ getTotalOperationalCost() | number:'1.1-2' }}/tick</span>
+        </div>
+      </div>
+
+      <div class="breakdown-final">
+        <span>Net Income:</span>
+        <span class="final-value">{{ (getTotalGuestIncome() * gameState.total_income_multiplier) - getTotalOperationalCost() | number:'1.1-2' }}/tick</span>
+      </div>
+    </div>
   </div>
+
   <!--<div class="resource">
     <span class="resource-icon">⭐</span>
     <span class="resource-label">Reputation:</span>
     <span class="resource-value">{{ gameState.resources.reputation | number:'1.0-1' }}</span>
   </div>-->
+
   <div class="resource">
     <span class="resource-icon">👥</span>
     <span class="resource-label">Max Guests:</span>
     <span class="resource-value">{{ gameState.resources.max_guests }}</span>
   </div>
-  <div class="resource">
+
+  <div class="resource resource-with-breakdown">
     <span class="resource-icon">📈</span>
     <span class="resource-label">Income Multiplier:</span>
     <span class="resource-value">{{ gameState.total_income_multiplier | number:'1.0-1' }}x</span>
+    <button class="breakdown-toggle" (click)="toggleMultiplierBreakdown()" title="Show multiplier breakdown">
+      {{ showMultiplierBreakdown ? '▼' : 'ℹ️' }}
+    </button>
+
+    <div class="breakdown-tooltip" *ngIf="showMultiplierBreakdown">
+      <h4>📈 Multiplier Breakdown</h4>
+
+      <div class="breakdown-section">
+        <div class="breakdown-item">
+          <span class="breakdown-label">Base Multiplier</span>
+          <span class="breakdown-value">×{{ getBaseMultiplier() | number:'1.1-1' }}</span>
+        </div>
+      </div>
+
+      <div class="breakdown-section" *ngIf="getUpgradeMultipliers().length > 0">
+        <div class="breakdown-header">From Upgrades</div>
+        <div class="breakdown-item" *ngFor="let upgrade of getUpgradeMultipliers()">
+          <span class="breakdown-label">{{ upgrade.name }}</span>
+          <span class="breakdown-value">×{{ upgrade.multiplier | number:'1.1-1' }}</span>
+        </div>
+      </div>
+
+      <div class="breakdown-final">
+        <span>Total Multiplier:</span>
+        <span class="final-value">×{{ gameState.total_income_multiplier | number:'1.1-1' }}</span>
+      </div>
+    </div>
   </div>
+
   <div class="resource">
     <span class="resource-icon">🗺️</span>
     <span class="resource-label">Location:</span>
     <span class="resource-value">({{ gameState.location.x }}, {{ gameState.location.y }})</span>
   </div>
+
   <div class="resource">
     <span class="resource-icon">⏰</span>
     <span class="resource-label">Max Offline:</span>
