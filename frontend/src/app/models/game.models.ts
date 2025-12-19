@@ -170,6 +170,7 @@ export interface Guest {
   id: string;
   name: string;
   guest_type: GuestType;
+  species: string;
   room_id: string | null;
   patience: number;
   gold_per_tick: number;

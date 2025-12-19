@@ -104,6 +104,9 @@
               <div class="guest-name-display">
                 {{ getGuestInRoom(room.id)?.name }}
               </div>
+              <div class="guest-species-display">
+                {{ getGuestInRoom(room.id)?.species || 'Unknown' }}
+              </div>
             </div>
             <div class="patience-bar">
               <div class="patience-fill"
@@ -181,6 +184,7 @@
               <div class="guest-title">
                 <span class="guest-name">{{ guest.name }}</span>
                 <span class="guest-type">{{ getGuestTypeName(guest.guest_type) }}</span>
+                <span class="guest-species">{{ guest.species }}</span>
               </div>
             </div>
             <div class="guest-details">
