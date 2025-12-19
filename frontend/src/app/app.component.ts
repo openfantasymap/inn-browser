@@ -41,6 +41,8 @@ export class AppComponent implements OnInit, OnDestroy {
   achievementNotifications: Array<{achievement: PlayerAchievement, id: number}> = [];
   private nextNotificationId = 0;
   private previousAchievements: Map<string, boolean> = new Map();
+  private shownAchievements: Set<string> = new Set(); // Track achievements that have been shown to prevent duplicates
+  private readonly SHOWN_ACHIEVEMENTS_KEY = 'shown_achievements';
 
   // Drag and drop state
   draggedGuest: Guest | null = null;
@@ -54,6 +56,9 @@ export class AppComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Load previously shown achievements from localStorage
+    this.loadShownAchievements();
+
     // Subscribe to authentication state
     this.authService.user$.subscribe(user => {
       this.currentUser = user;
@@ -64,6 +69,28 @@ export class AppComponent implements OnInit, OnDestroy {
         this.initializeGame();
       }
     });
+  }
+
+  private loadShownAchievements(): void {
+    try {
+      const stored = localStorage.getItem(this.SHOWN_ACHIEVEMENTS_KEY);
+      if (stored) {
+        const achievementIds = JSON.parse(stored);
+        this.shownAchievements = new Set(achievementIds);
+      }
+    } catch (error) {
+      console.error('Failed to load shown achievements:', error);
+      this.shownAchievements = new Set();
+    }
+  }
+
+  private saveShownAchievements(): void {
+    try {
+      const achievementIds = Array.from(this.shownAchievements);
+      localStorage.setItem(this.SHOWN_ACHIEVEMENTS_KEY, JSON.stringify(achievementIds));
+    } catch (error) {
+      console.error('Failed to save shown achievements:', error);
+    }
   }
 
   private initializeGame(): void {
@@ -86,9 +113,10 @@ export class AppComponent implements OnInit, OnDestroy {
       const achievementId = playerAchievement.achievement.id;
       const wasCompleted = this.previousAchievements.get(achievementId);
       const isNowCompleted = playerAchievement.is_completed;
+      const alreadyShown = this.shownAchievements.has(achievementId);
 
-      // If achievement was not completed before but is now, show notification
-      if (!wasCompleted && isNowCompleted) {
+      // If achievement was not completed before but is now, and hasn't been shown yet, show notification
+      if (!wasCompleted && isNowCompleted && !alreadyShown) {
         this.showAchievementNotification(playerAchievement);
       }
 
@@ -98,6 +126,12 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private showAchievementNotification(achievement: PlayerAchievement): void {
+    const achievementId = achievement.achievement.id;
+
+    // Mark as shown and persist to localStorage
+    this.shownAchievements.add(achievementId);
+    this.saveShownAchievements();
+
     const notification = {
       achievement,
       id: this.nextNotificationId++

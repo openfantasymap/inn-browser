@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
     GameState, Room, Guest, TavernItem, Ingredient, PlayerRecipe, Upgrade,
-    RoomTypeTemplate, UpgradeTemplate, RecipeTemplate, ActiveBuff, PremiumPurchase
+    RoomTypeTemplate, UpgradeTemplate, RecipeTemplate, ActiveBuff, PremiumPurchase,
+    Achievement, PlayerAchievement
 )
 
 
@@ -490,6 +491,112 @@ class RecipeTemplateAdmin(admin.ModelAdmin):
             unlocked, discovered, total
         )
     instance_count.short_description = 'Player Stats'
+
+
+@admin.register(Achievement)
+class AchievementAdmin(admin.ModelAdmin):
+    list_display = ['achievement_id', 'icon_display', 'name', 'requirement_display',
+                    'reward_display', 'player_count']
+    list_filter = ['requirement_type', 'reward_upgrade']
+    search_fields = ['name', 'achievement_id', 'description']
+    ordering = ['requirement_type', 'requirement_value']
+
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('achievement_id', 'name', 'description', 'icon')
+        }),
+        ('Requirements', {
+            'fields': ('requirement_type', 'requirement_value', 'requirement_metadata')
+        }),
+        ('Reward', {
+            'fields': ('reward_upgrade',),
+            'description': 'Optional upgrade unlocked when achievement is completed'
+        }),
+    )
+
+    def icon_display(self, obj):
+        return format_html('<span style="font-size: 1.5em;">{}</span>', obj.icon)
+    icon_display.short_description = ''
+
+    def requirement_display(self, obj):
+        req_type = obj.requirement_type.replace('_', ' ').title()
+        metadata = ''
+        if obj.requirement_metadata:
+            if 'patience_min' in obj.requirement_metadata:
+                metadata = f" (patience ≥{obj.requirement_metadata['patience_min']}%)"
+            elif 'patience_max' in obj.requirement_metadata:
+                metadata = f" (patience ≤{obj.requirement_metadata['patience_max']}%)"
+            elif 'race' in obj.requirement_metadata:
+                metadata = f" ({obj.requirement_metadata['race']})"
+            elif 'guest_type' in obj.requirement_metadata:
+                metadata = f" ({obj.requirement_metadata['guest_type']})"
+        return format_html('<strong>{}</strong>: {}{}'.format(
+            req_type, obj.requirement_value, metadata))
+    requirement_display.short_description = 'Requirement'
+
+    def reward_display(self, obj):
+        if obj.reward_upgrade:
+            return format_html('<span style="color: purple;">🎁 {}</span>', obj.reward_upgrade.name)
+        return format_html('<span style="color: gray;">—</span>')
+    reward_display.short_description = 'Reward'
+
+    def player_count(self, obj):
+        completed = obj.player_achievements.filter(
+            progress__gte=obj.requirement_value
+        ).count()
+        total = obj.player_achievements.count()
+        if completed == 0:
+            return format_html('<span style="color: gray;">{} tracking</span>', total)
+        return format_html('<strong>{}</strong> completed / {} tracking', completed, total)
+    player_count.short_description = 'Players'
+
+
+@admin.register(PlayerAchievement)
+class PlayerAchievementAdmin(admin.ModelAdmin):
+    list_display = ['achievement_display', 'game_state', 'progress_display',
+                    'completion_status', 'earned_at']
+    list_filter = ['achievement', 'game_state']
+    search_fields = ['game_state__player_id', 'achievement__name', 'achievement__achievement_id']
+    readonly_fields = ['earned_at']
+    ordering = ['-earned_at', '-progress']
+
+    fieldsets = (
+        ('Achievement Info', {
+            'fields': ('game_state', 'achievement')
+        }),
+        ('Progress', {
+            'fields': ('progress', 'earned_at')
+        }),
+    )
+
+    def achievement_display(self, obj):
+        return format_html('{} {}', obj.achievement.icon, obj.achievement.name)
+    achievement_display.short_description = 'Achievement'
+
+    def progress_display(self, obj):
+        target = obj.achievement.requirement_value
+        progress = obj.progress
+        percentage = min(100, (progress / target * 100)) if target > 0 else 0
+
+        if progress >= target:
+            color = 'green'
+            bar = '█' * 10
+        else:
+            color = 'orange'
+            filled = int((progress / target) * 10)
+            bar = '█' * filled + '░' * (10 - filled)
+
+        return format_html(
+            '<span style="color: {};">{}</span> <code>{}/{}</code> ({}%)',
+            color, bar, progress, target, int(percentage)
+        )
+    progress_display.short_description = 'Progress'
+
+    def completion_status(self, obj):
+        if obj.progress >= obj.achievement.requirement_value:
+            return format_html('<span style="color: green; font-weight: bold;">✓ Completed</span>')
+        return format_html('<span style="color: gray;">In Progress</span>')
+    completion_status.short_description = 'Status'
 
 
 # ============================================================================

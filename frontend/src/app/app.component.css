@@ -547,6 +547,18 @@
   box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
   position: relative;
   overflow: hidden;
+  padding: 20px;
+}
+
+.premium-upgrade .upgrade-name {
+  font-size: 1.3em;
+  color: #78350f;
+}
+
+.premium-upgrade .upgrade-description {
+  font-size: 1.05em;
+  line-height: 1.5;
+  margin: 12px 0;
 }
 
 .premium-upgrade::before {
@@ -554,7 +566,7 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  font-size: 24px;
+  font-size: 28px;
   opacity: 0.6;
   animation: sparkle 2s ease-in-out infinite;
 }
@@ -567,9 +579,9 @@
 .premium-price {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: 15px;
-  font-size: 1.1em;
+  font-size: 1.3em;
   font-weight: bold;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
 }
@@ -577,25 +589,27 @@
 .premium-details {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: 12px 0;
-  padding: 10px;
+  gap: 10px;
+  margin: 15px 0;
+  padding: 15px;
   background: rgba(255, 255, 255, 0.6);
   border-radius: 8px;
 }
 
 .premium-duration,
 .premium-effect {
-  font-size: 0.9em;
+  font-size: 1.05em;
   color: #78350f;
   font-weight: 600;
+  line-height: 1.4;
 }
 
 .premium-btn {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
-  font-size: 1.05em;
-  padding: 12px;
+  font-size: 1.1em;
+  padding: 14px;
+  font-weight: bold;
 }
 
 .premium-btn:hover {
