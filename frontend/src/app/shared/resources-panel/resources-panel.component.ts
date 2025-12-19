@@ -62,4 +62,18 @@ export class ResourcesPanelComponent {
       .filter(u => u.purchased && u.operational_cost_per_tick)
       .reduce((sum, u) => sum + (u.operational_cost_per_tick || 0), 0);
   }
+
+  getNetIncomePerTick(): number {
+    return (this.getTotalGuestIncome() * this.gameState.total_income_multiplier) - this.getTotalOperationalCost();
+  }
+
+  getPassiveIncomePerHour(): number {
+    // Assuming ~60 ticks per minute, 3600 ticks per hour (game speed dependent)
+    const ticksPerHour = 3600 / (this.gameState.game_speed || 1);
+    return this.getNetIncomePerTick() * ticksPerHour;
+  }
+
+  getEstimatedOfflineEarnings(): number {
+    return this.getPassiveIncomePerHour() * this.gameState.max_offline_hours;
+  }
 }

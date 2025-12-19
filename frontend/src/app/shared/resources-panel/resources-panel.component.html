@@ -50,7 +50,23 @@
 
       <div class="breakdown-final">
         <span>Net Income:</span>
-        <span class="final-value">{{ (getTotalGuestIncome() * gameState.total_income_multiplier) - getTotalOperationalCost() | number:'1.1-2' }}/tick</span>
+        <span class="final-value">{{ getNetIncomePerTick() | number:'1.1-2' }}/tick</span>
+      </div>
+
+      <div class="breakdown-section passive-income-section">
+        <div class="breakdown-header">💤 Passive Income (Offline)</div>
+        <div class="breakdown-item passive-item">
+          <span class="breakdown-label">Income per Hour</span>
+          <span class="breakdown-value">{{ getPassiveIncomePerHour() | number:'1.0-0' }} 💰/hour</span>
+        </div>
+        <div class="breakdown-item passive-item">
+          <span class="breakdown-label">Max Offline Time</span>
+          <span class="breakdown-value">{{ gameState.max_offline_hours }} hours</span>
+        </div>
+        <div class="breakdown-total passive-total">
+          <span>Max Offline Earnings:</span>
+          <span>{{ getEstimatedOfflineEarnings() | number:'1.0-0' }} 💰</span>
+        </div>
       </div>
     </div>
   </div>
