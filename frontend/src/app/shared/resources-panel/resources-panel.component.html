@@ -99,7 +99,7 @@
       <div class="breakdown-section">
         <div class="breakdown-item">
           <span class="breakdown-label">Base Multiplier</span>
-          <span class="breakdown-value">×{{ getBaseMultiplier() | number:'1.1-1' }}</span>
+          <span class="breakdown-value">×{{ getBaseMultiplier() | number:'1.1-2' }}</span>
         </div>
       </div>
 
@@ -107,13 +107,13 @@
         <div class="breakdown-header">From Upgrades</div>
         <div class="breakdown-item" *ngFor="let upgrade of getUpgradeMultipliers()">
           <span class="breakdown-label">{{ upgrade.name }}</span>
-          <span class="breakdown-value">×{{ upgrade.multiplier | number:'1.1-1' }}</span>
+          <span class="breakdown-value">×{{ upgrade.multiplier | number:'1.1-2' }}</span>
         </div>
       </div>
 
       <div class="breakdown-final">
         <span>Total Multiplier:</span>
-        <span class="final-value">×{{ gameState.total_income_multiplier | number:'1.1-1' }}</span>
+        <span class="final-value">×{{ gameState.total_income_multiplier | number:'1.1-2' }}</span>
       </div>
     </div>
   </div>
