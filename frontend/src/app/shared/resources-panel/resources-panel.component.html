@@ -36,7 +36,7 @@
 
       <div class="breakdown-section" *ngIf="getTotalOperationalCost() > 0">
         <div class="breakdown-header">Operational Costs</div>
-        <div class="breakdown-item" *ngFor="let upgrade of gameState.purchased_upgrades">
+        <div class="breakdown-item" *ngFor="let upgrade of gameState.upgrades">
           <ng-container *ngIf="upgrade.purchased && upgrade.operational_cost_per_tick && upgrade.operational_cost_per_tick > 0">
             <span class="breakdown-label">{{ upgrade.name }}</span>
             <span class="breakdown-value cost">-{{ upgrade.operational_cost_per_tick | number:'1.1-2' }}</span>

@@ -29,8 +29,8 @@ export class ResourcesPanelComponent {
   }
 
   getIncomeUpgrades() {
-    if (!this.gameState || !this.gameState.purchased_upgrades) return [];
-    return this.gameState.purchased_upgrades.filter(u =>
+    if (!this.gameState || !this.gameState.upgrades) return [];
+    return this.gameState.upgrades.filter(u =>
       u.effect_type === 'income_multiplier' && u.purchased
     );
   }
@@ -57,8 +57,8 @@ export class ResourcesPanelComponent {
   }
 
   getTotalOperationalCost(): number {
-    if (!this.gameState || !this.gameState.purchased_upgrades) return 0;
-    return this.gameState.purchased_upgrades
+    if (!this.gameState || !this.gameState.upgrades) return 0;
+    return this.gameState.upgrades
       .filter(u => u.purchased && u.operational_cost_per_tick)
       .reduce((sum, u) => sum + (u.operational_cost_per_tick || 0), 0);
   }
