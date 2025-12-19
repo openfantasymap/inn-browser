@@ -15,7 +15,7 @@ export class MqttService {
   private connectionStatusSubject = new BehaviorSubject<boolean>(false);
   public connectionStatus$ = this.connectionStatusSubject.asObservable();
 
-  private brokerUrl = 'wss://broker.hivemq.com:8000/mqtt'; // WebSocket port for MQTT
+  private brokerUrl = 'wss://broker.hivemq.com:8884/mqtt'; // WebSocket port for MQTT
   private connected = false;
 
   constructor(
