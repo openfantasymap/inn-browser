@@ -200,6 +200,9 @@ class GameService:
                 room.cleanliness = min(100, room.cleanliness + 2.0)
                 room.save()
 
+        # Auto-assign waiting guests to available rooms
+        GameService._auto_assign_guests(game_state)
+
         # Decrease patience for waiting guests (not assigned to rooms)
         waiting_guests = game_state.guests.filter(room__isnull=True)
         for guest in waiting_guests:
@@ -280,6 +283,44 @@ class GameService:
                 game_state.ingredient_inventory[ingredient.ingredient_id] = current_amount + 1
 
         game_state.save()
+
+    @staticmethod
+    def _auto_assign_guests(game_state: GameState):
+        """Automatically assign waiting guests to available empty rooms"""
+        # Get waiting guests (not assigned to any room)
+        waiting_guests = game_state.guests.filter(room__isnull=True).order_by('-gold_per_tick')
+
+        if not waiting_guests.exists():
+            return
+
+        # Get available empty rooms (not occupied and with good cleanliness)
+        available_rooms = game_state.rooms.filter(
+            occupied=False,
+            cleanliness__gte=50  # Only assign to clean enough rooms
+        ).order_by('-level')  # Prefer higher level rooms
+
+        if not available_rooms.exists():
+            return
+
+        # Assign guests to rooms
+        for guest in waiting_guests:
+            if not available_rooms.exists():
+                break
+
+            # Get first available room
+            room = available_rooms.first()
+
+            # Assign guest to room
+            guest.room = room
+            guest.check_in_time = timezone.now()
+            guest.save()
+
+            # Mark room as occupied
+            room.occupied = True
+            room.save()
+
+            # Remove this room from available rooms queryset
+            available_rooms = available_rooms.exclude(id=room.id)
 
     @staticmethod
     def _try_spawn_guest(game_state: GameState):
