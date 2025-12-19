@@ -9,7 +9,7 @@ import { MqttService } from './mqtt.service';
   providedIn: 'root'
 })
 export class GameService {
-  private apiUrl = 'http://51.15.160.236:9898/api';  // Django backend on port 8001
+  private apiUrl = 'https://api.inn.games.fantasymaps.org/api';  // Django backend on port 8001
   private playerId = 'player_1'; // In a real app, this would come from auth
   private gameStateSubject = new BehaviorSubject<InnState | null>(null);
   public gameState$ = this.gameStateSubject.asObservable();
