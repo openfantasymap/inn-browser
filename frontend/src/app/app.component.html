@@ -229,6 +229,10 @@
               <span class="purchased-badge" *ngIf="upgrade.purchased">✓</span>
             </div>
             <p class="upgrade-description">{{ upgrade.description }}</p>
+            <div class="upgrade-operational-cost" *ngIf="upgrade.operational_cost_per_tick && upgrade.operational_cost_per_tick > 0">
+              <span class="cost-label">⚙️ Operational Cost:</span>
+              <span class="cost-value">{{ upgrade.operational_cost_per_tick }} 💰/tick</span>
+            </div>
             <button *ngIf="!upgrade.purchased"
                     class="purchase-btn"
                     [disabled]="gameState.resources.gold < upgrade.cost"
@@ -237,7 +241,7 @@
             </button>
           </div>
         </div>
-      } 
+      }
       @if(activeUpgradeTab === 'purchased'){
         <div class="upgrades-list">
           <div *ngFor="let upgrade of getAcquiredUpgrades()"
@@ -251,6 +255,10 @@
               <span class="purchased-badge" *ngIf="upgrade.purchased">✓</span>
             </div>
             <p class="upgrade-description">{{ upgrade.description }}</p>
+            <div class="upgrade-operational-cost" *ngIf="upgrade.operational_cost_per_tick && upgrade.operational_cost_per_tick > 0">
+              <span class="cost-label">⚙️ Operational Cost:</span>
+              <span class="cost-value">{{ upgrade.operational_cost_per_tick }} 💰/tick</span>
+            </div>
             <button *ngIf="!upgrade.purchased"
                     class="purchase-btn"
                     [disabled]="gameState.resources.gold < upgrade.cost"

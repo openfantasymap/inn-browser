@@ -518,6 +518,31 @@
   margin: 8px 0;
 }
 
+.upgrade-operational-cost {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  padding: 8px 12px;
+  margin: 10px 0;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9em;
+}
+
+.upgrade-operational-cost .cost-label {
+  color: #92400e;
+  font-weight: 600;
+}
+
+.upgrade-operational-cost .cost-value {
+  background: #fbbf24;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
 .purchase-btn {
   width: 100%;
   background: #8b5cf6;
