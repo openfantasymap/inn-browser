@@ -343,7 +343,7 @@ class PremiumPurchaseAdmin(admin.ModelAdmin):
 @admin.register(RoomTypeTemplate)
 class RoomTypeTemplateAdmin(admin.ModelAdmin):
     list_display = ['room_type_id', 'emoji_display', 'name', 'base_cost',
-                    'income_multiplier', 'required_upgrade_display', 'instance_count']
+                    'income_multiplier', 'bonuses_display', 'required_upgrade_display', 'instance_count']
     list_filter = ['required_upgrade']
     search_fields = ['name', 'room_type_id']
     ordering = ['base_cost']
@@ -355,6 +355,16 @@ class RoomTypeTemplateAdmin(admin.ModelAdmin):
         ('Attributes', {
             'fields': ('base_cost', 'income_multiplier')
         }),
+        ('Special Bonuses', {
+            'fields': ('species_bonuses', 'type_bonuses'),
+            'description': (
+                'Configure special income multipliers for specific guest species or types.<br>'
+                '<strong>Format:</strong> JSON dictionary with species/type names as keys and multipliers as values<br>'
+                '<strong>Species Example:</strong> {"Elf": 1.5, "Dwarf": 1.3, "Half-Elf": 1.4}<br>'
+                '<strong>Type Example:</strong> {"wizard": 2.0, "sorcerer": 1.8, "paladin": 1.5}<br>'
+                '<em>Note: Species names should be capitalized, type names should be lowercase</em>'
+            )
+        }),
         ('Requirements', {
             'fields': ('required_upgrade',),
             'classes': ('collapse',)
@@ -364,6 +374,23 @@ class RoomTypeTemplateAdmin(admin.ModelAdmin):
     def emoji_display(self, obj):
         return format_html('<span style="font-size: 1.5em;">{}</span>', obj.emoji)
     emoji_display.short_description = ''
+
+    def bonuses_display(self, obj):
+        bonuses = []
+        if obj.species_bonuses:
+            for species, bonus in obj.species_bonuses.items():
+                bonuses.append(f'{species}: {bonus}x')
+        if obj.type_bonuses:
+            for gtype, bonus in obj.type_bonuses.items():
+                bonuses.append(f'{gtype}: {bonus}x')
+
+        if bonuses:
+            bonus_text = ', '.join(bonuses[:3])  # Show first 3
+            if len(bonuses) > 3:
+                bonus_text += f' (+{len(bonuses) - 3} more)'
+            return format_html('<span style="color: #f59e0b; font-weight: 600;">✨ {}</span>', bonus_text)
+        return format_html('<span style="color: gray;">—</span>')
+    bonuses_display.short_description = 'Special Bonuses'
 
     def required_upgrade_display(self, obj):
         if obj.required_upgrade:
