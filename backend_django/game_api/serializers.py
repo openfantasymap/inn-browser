@@ -196,6 +196,7 @@ class GameStateSerializer(serializers.ModelSerializer):
     location = serializers.SerializerMethodField()
     offline_progress = serializers.SerializerMethodField()
     achievements = serializers.SerializerMethodField()
+    all_achievements = serializers.SerializerMethodField()
 
     class Meta:
         model = GameState
@@ -204,7 +205,7 @@ class GameStateSerializer(serializers.ModelSerializer):
                   'game_speed', 'last_update', 'tavern_unlocked',
                   'tavern_items', 'inventory', 'available_ingredients',
                   'room_types', 'location', 'offline_progress', 'max_offline_hours',
-                  'active_buffs', 'buff_multipliers', 'premium_upgrades', 'achievements']
+                  'active_buffs', 'buff_multipliers', 'premium_upgrades', 'achievements', 'all_achievements']
 
     def get_resources(self, obj):
         """Get resources in the format expected by Angular frontend"""
@@ -341,6 +342,40 @@ class GameStateSerializer(serializers.ModelSerializer):
         """Get all player achievements with progress"""
         player_achievements = obj.achievements.select_related('achievement', 'achievement__reward_upgrade').all()
         return PlayerAchievementSerializer(player_achievements, many=True).data
+
+    def get_all_achievements(self, obj):
+        """Get all achievement templates with player progress (cached for 1 hour)"""
+        # Cache achievement templates (static data)
+        cache_key = 'all_achievement_templates'
+        all_achievements = cache.get(cache_key)
+        if all_achievements is None:
+            all_achievements = list(Achievement.objects.select_related('reward_upgrade').all())
+            cache.set(cache_key, all_achievements, timeout=3600)  # Cache for 1 hour
+
+        # Fetch player's achievements at once to avoid N+1 queries
+        player_achievements = obj.achievements.select_related('achievement').all()
+        player_progress = {pa.achievement.achievement_id: pa for pa in player_achievements}
+
+        achievements_data = []
+        for achievement in all_achievements:
+            player_achievement = player_progress.get(achievement.achievement_id)
+
+            achievements_data.append({
+                'id': achievement.achievement_id,
+                'name': achievement.name,
+                'description': achievement.description,
+                'requirement_type': achievement.requirement_type,
+                'requirement_value': achievement.requirement_value,
+                'requirement_metadata': achievement.requirement_metadata,
+                'icon': achievement.icon,
+                'reward_upgrade_id': achievement.reward_upgrade.upgrade_id if achievement.reward_upgrade else None,
+                'reward_upgrade_name': achievement.reward_upgrade.name if achievement.reward_upgrade else None,
+                'progress': player_achievement.progress if player_achievement else 0,
+                'is_completed': player_achievement.progress >= achievement.requirement_value if player_achievement else False,
+                'earned_at': player_achievement.earned_at.strftime("%Y-%m-%d %H:%M:%S") if player_achievement and player_achievement.progress >= achievement.requirement_value else None
+            })
+
+        return achievements_data
 
 
 class GameStateListSerializer(serializers.ModelSerializer):

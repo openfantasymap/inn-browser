@@ -249,6 +249,21 @@ export interface PlayerAchievement {
   is_completed: boolean;
 }
 
+export interface AchievementWithProgress {
+  id: string;
+  name: string;
+  description: string;
+  requirement_type: string;
+  requirement_value: number;
+  requirement_metadata: any;
+  icon: string;
+  reward_upgrade_id: string | null;
+  reward_upgrade_name: string | null;
+  progress: number;
+  is_completed: boolean;
+  earned_at: string | null;
+}
+
 export interface InnState {
   resources: Resources;
   rooms: Room[];
@@ -268,5 +283,6 @@ export interface InnState {
   offline_progress: OfflineProgress;
   max_offline_hours: number;
   achievements: PlayerAchievement[];
+  all_achievements: AchievementWithProgress[];
   premium_upgrades: Upgrade[];
 }
