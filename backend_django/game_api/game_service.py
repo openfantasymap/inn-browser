@@ -246,7 +246,7 @@ class GameService:
                 if time_stayed > guest.stay_duration:
                     should_leave = True
                     # Check if satisfied enough for ingredient drops
-                    if guest.satisfaction >= 80:
+                    if guest.satisfaction >= 70:
                         GameService._drop_ingredients_from_guest(game_state, guest)
 
             if should_leave:
@@ -266,7 +266,7 @@ class GameService:
                     #     print(f"Room {guest.room.id} leveled up to {guest.room.level}!")
 
                 # Add reputation
-                if guest.satisfaction >= 80:
+                if guest.satisfaction >= 70:
                     game_state.reputation += guest.reputation_bonus
                 elif guest.satisfaction < 30:
                     game_state.reputation -= abs(guest.reputation_bonus) * 0.5
