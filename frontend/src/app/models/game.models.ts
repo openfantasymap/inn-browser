@@ -176,6 +176,7 @@ export interface ExperimentResult {
 
 export interface Inventory {
   items: { [key: string]: number };
+  ingredients: { [key: string]: number };
 }
 
 export interface Guest {

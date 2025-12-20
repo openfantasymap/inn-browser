@@ -87,7 +87,7 @@
 
   <div class="resource resource-with-breakdown">
     <span class="resource-icon">📈</span>
-    <span class="resource-label">Income Multiplier:</span>
+    <span class="resource-label">Income:</span>
     <span class="resource-value">{{ gameState.total_income_multiplier | number:'1.0-1' }}x</span>
     <button class="breakdown-toggle" (click)="toggleMultiplierBreakdown()" title="Show multiplier breakdown">
       {{ showMultiplierBreakdown ? '▼' : 'ℹ️' }}
@@ -129,66 +129,65 @@
     <span class="resource-label">Max Offline:</span>
     <span class="resource-value">{{ gameState.max_offline_hours }}h</span>
   </div>
-</div>
 
-<!-- Achievements Toggle Button -->
-<div class="achievements-container">
-  <button class="achievements-toggle-btn" (click)="toggleAchievements()" [title]="'Achievements: ' + getCompletedAchievements().length + '/' + getTotalAchievements()">
-    <span class="achievements-icon">🏆</span>
-    <span class="achievements-count">{{ getCompletedAchievements().length }}/{{ getTotalAchievements() }}</span>
-  </button>
+  <!-- Achievements Toggle Button -->
+  <div class="achievements-container">
+    <button class="achievements-toggle-btn" (click)="toggleAchievements()" [title]="'Achievements: ' + getCompletedAchievements().length + '/' + getTotalAchievements()">
+      <span class="achievements-icon">🏆</span>
+    </button>
 
-  <div class="achievements-dropdown" *ngIf="showAchievements">
-    <h4>🏆 Achievements</h4>
+    <div class="achievements-dropdown" *ngIf="showAchievements">
+      <h4>🏆 Achievements</h4>
 
-    <!-- Completed Achievements -->
-    <div class="breakdown-section" *ngIf="getCompletedAchievements().length > 0">
-      <div class="breakdown-header">✅ Completed ({{ getCompletedAchievements().length }})</div>
-      <div class="achievement-item completed" *ngFor="let achievement of getCompletedAchievements()">
-        <span class="achievement-icon">{{ achievement.icon }}</span>
-        <div class="achievement-info">
-          <span class="achievement-name">{{ achievement.name }}</span>
-          <span class="achievement-desc">{{ achievement.description }}</span>
-          <span class="achievement-reward" *ngIf="achievement.reward_upgrade_name">
-            🎁 {{ achievement.reward_upgrade_name }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- In Progress Achievements -->
-    <div class="breakdown-section" *ngIf="getInProgressAchievements().length > 0">
-      <div class="breakdown-header">⏳ In Progress ({{ getInProgressAchievements().length }})</div>
-      <div class="achievement-item in-progress" *ngFor="let achievement of getInProgressAchievements()">
-        <span class="achievement-icon">{{ achievement.icon }}</span>
-        <div class="achievement-info">
-          <span class="achievement-name">{{ achievement.name }}</span>
-          <span class="achievement-desc">{{ achievement.description }}</span>
-          <div class="achievement-progress">
-            <div class="progress-bar">
-              <div class="progress-fill" [style.width.%]="getProgressPercentage(achievement)"></div>
-            </div>
-            <span class="progress-text">{{ achievement.progress }}/{{ achievement.requirement_value }}</span>
+      <!-- Completed Achievements -->
+      <div class="breakdown-section" *ngIf="getCompletedAchievements().length > 0">
+        <div class="breakdown-header">✅ Completed ({{ getCompletedAchievements().length }})</div>
+        <div class="achievement-item completed" *ngFor="let achievement of getCompletedAchievements()">
+          <span class="achievement-icon">{{ achievement.icon }}</span>
+          <div class="achievement-info">
+            <span class="achievement-name">{{ achievement.name }}</span>
+            <span class="achievement-desc">{{ achievement.description }}</span>
+            <span class="achievement-reward" *ngIf="achievement.reward_upgrade_name">
+              🎁 {{ achievement.reward_upgrade_name }}
+            </span>
           </div>
-          <span class="achievement-reward" *ngIf="achievement.reward_upgrade_name">
-            🎁 {{ achievement.reward_upgrade_name }}
-          </span>
         </div>
       </div>
-    </div>
 
-    <!-- Locked Achievements -->
-    <div class="breakdown-section" *ngIf="getLockedAchievements().length > 0">
-      <div class="breakdown-header">🔒 Locked ({{ getLockedAchievements().length }})</div>
-      <div class="achievement-item locked" *ngFor="let achievement of getLockedAchievements()">
-        <span class="achievement-icon">{{ achievement.icon }}</span>
-        <div class="achievement-info">
-          <span class="achievement-name">{{ achievement.name }}</span>
-          <span class="achievement-desc">{{ achievement.description }}</span>
-          <span class="achievement-requirement">Goal: {{ achievement.requirement_value }}</span>
-          <span class="achievement-reward" *ngIf="achievement.reward_upgrade_name">
-            🎁 {{ achievement.reward_upgrade_name }}
-          </span>
+      <!-- In Progress Achievements -->
+      <div class="breakdown-section" *ngIf="getInProgressAchievements().length > 0">
+        <div class="breakdown-header">⏳ In Progress ({{ getInProgressAchievements().length }})</div>
+        <div class="achievement-item in-progress" *ngFor="let achievement of getInProgressAchievements()">
+          <span class="achievement-icon">{{ achievement.icon }}</span>
+          <div class="achievement-info">
+            <span class="achievement-name">{{ achievement.name }}</span>
+            <span class="achievement-desc">{{ achievement.description }}</span>
+            <div class="achievement-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="getProgressPercentage(achievement)"></div>
+              </div>
+              <span class="progress-text">{{ achievement.progress }}/{{ achievement.requirement_value }}</span>
+            </div>
+            <span class="achievement-reward" *ngIf="achievement.reward_upgrade_name">
+              🎁 {{ achievement.reward_upgrade_name }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Locked Achievements -->
+      <div class="breakdown-section" *ngIf="getLockedAchievements().length > 0">
+        <div class="breakdown-header">🔒 Locked ({{ getLockedAchievements().length }})</div>
+        <div class="achievement-item locked" *ngFor="let achievement of getLockedAchievements()">
+          <span class="achievement-icon">{{ achievement.icon }}</span>
+          <div class="achievement-info">
+            <span class="achievement-name">{{ achievement.name }}</span>
+            <span class="achievement-desc">{{ achievement.description }}</span>
+            <span class="achievement-requirement">Goal: {{ achievement.requirement_value }}</span>
+            <span class="achievement-reward" *ngIf="achievement.reward_upgrade_name">
+              🎁 {{ achievement.reward_upgrade_name }}
+            </span>
+          </div>
         </div>
       </div>
     </div>

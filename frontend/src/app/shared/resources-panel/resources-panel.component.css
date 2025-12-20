@@ -6,7 +6,7 @@
   border-radius: 8px;
   margin-bottom: 20px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(5, minmax(200px, 1fr)) 100px;
   gap: 15px;
   box-shadow:
     0 8px 16px rgba(0, 0, 0, 0.6),
@@ -207,13 +207,18 @@
 /* Achievements Styling */
 .achievements-container {
   position: relative;
-  margin-top: 15px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: linear-gradient(135deg, #d4af37 0%, #b8941e 100%);
+  border-radius: 6px;
+  border: 2px solid #8b6f47;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 .achievements-toggle-btn {
   background: linear-gradient(135deg, #d4af37 0%, #b8941e 100%);
-  border: 3px ridge #8b6f47;
-  border-radius: 8px;
+  border: 0;
   padding: 12px 20px;
   cursor: pointer;
   display: flex;
@@ -222,15 +227,7 @@
   font-size: 1.1em;
   font-weight: bold;
   color: #3a2616;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-  transition: all 0.3s ease;
   width: 100%;
-}
-
-.achievements-toggle-btn:hover {
-  background: linear-gradient(135deg, #ffd700 0%, #d4af37 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
 }
 
 .achievements-icon {
@@ -246,7 +243,7 @@
 .achievements-dropdown {
   position: absolute;
   top: 100%;
-  left: 0;
+  left: -200px;
   right: 0;
   margin-top: 10px;
   background:
