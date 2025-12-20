@@ -290,7 +290,7 @@ class GameService:
         # Check if player has auto_assign upgrade
         has_auto_assign = game_state.purchased_upgrades.filter(
             upgrade_template__effect_type='auto_assign_speed',
-            purchased=True
+            purchased_at__isnull=False
         ).exists()
 
         if not has_auto_assign:
