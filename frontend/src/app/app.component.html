@@ -114,9 +114,9 @@
               <div class="guest-species-display">
                 {{ getGuestInRoom(room.id)?.species || 'Unknown' }}
               </div>
-              <div class="room-bonus-display" *ngIf="getRoomBonus(room, getGuestInRoom(room.id)) > 1.0">
+              <!--<div class="room-bonus-display" *ngIf="getRoomBonus(room, getGuestInRoom(room.id)) > 1.0">
                 ✨ {{ getRoomBonus(room, getGuestInRoom(room.id)) }}x
-              </div>
+              </div>-->
             </div>
             <div class="patience-bar">
               <div class="patience-fill"
