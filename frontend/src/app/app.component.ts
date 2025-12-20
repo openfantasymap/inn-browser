@@ -276,6 +276,59 @@ export class AppComponent implements OnInit, OnDestroy {
     return this.gameState?.rooms.sort((a:Room, b:Room)=> (parseInt(a.id)-parseInt(b.id)));
   }
 
+  getSortedRoomTypes() {
+    if (!this.gameState || !this.gameState.room_types) {
+      return [];
+    }
+    // Sort by base_cost ascending
+    return this.gameState.room_types.sort((a, b) => a.base_cost - b.base_cost);
+  }
+
+  buildRoomByType(roomTypeId: string): void {
+    if (this.gameState) {
+      this.gameService.buildRoom(roomTypeId as RoomType).subscribe();
+    }
+  }
+
+  canAffordRoomByTemplate(roomTemplate: any): boolean {
+    return this.gameState ? this.gameState.resources.gold >= roomTemplate.base_cost : false;
+  }
+
+  isRoomTypeUnlockedByTemplate(roomTemplate: any): boolean {
+    if (!roomTemplate.required_upgrade_id) {
+      return true; // No requirement, always unlocked
+    }
+
+    if (!this.gameState) {
+      return false;
+    }
+
+    // Check if the required upgrade is purchased
+    return this.gameState.upgrades.some(u =>
+      u.id === roomTemplate.required_upgrade_id && u.purchased
+    );
+  }
+
+  getRoomBonusDisplayByTemplate(roomTemplate: any): string {
+    const bonuses: string[] = [];
+
+    // Species bonuses
+    if (roomTemplate.species_bonuses && Object.keys(roomTemplate.species_bonuses).length > 0) {
+      for (const [species, bonus] of Object.entries(roomTemplate.species_bonuses)) {
+        bonuses.push(`${species}: ${bonus}x`);
+      }
+    }
+
+    // Type bonuses
+    if (roomTemplate.type_bonuses && Object.keys(roomTemplate.type_bonuses).length > 0) {
+      for (const [type, bonus] of Object.entries(roomTemplate.type_bonuses)) {
+        bonuses.push(`${type}: ${bonus}x`);
+      }
+    }
+
+    return bonuses.length > 0 ? bonuses.join(', ') : '';
+  }
+
   getWaitingGuests(): Guest[] {
     return this.gameState?.guests.filter(g => !g.room_id) || [];
   }

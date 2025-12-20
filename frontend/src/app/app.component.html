@@ -132,49 +132,17 @@
       <div class="build-room-section">
         <h3>Build New Room</h3>
         <div class="build-buttons">
-          <button (click)="buildRoom(RoomType.BASIC)"
-                  [disabled]="!canAffordRoom(RoomType.BASIC) || !isRoomTypeUnlocked(RoomType.BASIC)"
+          <button *ngFor="let roomType of getSortedRoomTypes()"
+                  (click)="buildRoomByType(roomType.id)"
+                  [disabled]="!canAffordRoomByTemplate(roomType) || !isRoomTypeUnlockedByTemplate(roomType)"
                   class="build-btn"
-                  [class.locked]="!isRoomTypeUnlocked(RoomType.BASIC)"
-                  [title]="!isRoomTypeUnlocked(RoomType.BASIC) ? 'Requires: ' + getRoomTypeRequirement(RoomType.BASIC) : ''">
-            <span class="btn-main">🛏️ Basic ({{ getRoomCost(RoomType.BASIC) }} gold)</span>
-            <span class="room-bonus-info" *ngIf="getRoomBonusDisplay(RoomType.BASIC)">
-              ✨ {{ getRoomBonusDisplay(RoomType.BASIC) }}
+                  [class.locked]="!isRoomTypeUnlockedByTemplate(roomType)"
+                  [title]="!isRoomTypeUnlockedByTemplate(roomType) ? 'Requires: ' + (roomType.required_upgrade_id || 'Unknown') : ''">
+            <span class="btn-main">{{ roomType.emoji }} {{ roomType.name }} ({{ roomType.base_cost }} gold)</span>
+            <span class="room-bonus-info" *ngIf="getRoomBonusDisplayByTemplate(roomType)">
+              ✨ {{ getRoomBonusDisplayByTemplate(roomType) }}
             </span>
-            <span *ngIf="!isRoomTypeUnlocked(RoomType.BASIC)" class="lock-icon">🔒</span>
-          </button>
-          <button (click)="buildRoom(RoomType.STANDARD)"
-                  [disabled]="!canAffordRoom(RoomType.STANDARD) || !isRoomTypeUnlocked(RoomType.STANDARD)"
-                  class="build-btn"
-                  [class.locked]="!isRoomTypeUnlocked(RoomType.STANDARD)"
-                  [title]="!isRoomTypeUnlocked(RoomType.STANDARD) ? 'Requires: ' + getRoomTypeRequirement(RoomType.STANDARD) : ''">
-            <span class="btn-main">🏠 Standard ({{ getRoomCost(RoomType.STANDARD) }} gold)</span>
-            <span class="room-bonus-info" *ngIf="getRoomBonusDisplay(RoomType.STANDARD)">
-              ✨ {{ getRoomBonusDisplay(RoomType.STANDARD) }}
-            </span>
-            <span *ngIf="!isRoomTypeUnlocked(RoomType.STANDARD)" class="lock-icon">🔒</span>
-          </button>
-          <button (click)="buildRoom(RoomType.DELUXE)"
-                  [disabled]="!canAffordRoom(RoomType.DELUXE) || !isRoomTypeUnlocked(RoomType.DELUXE)"
-                  class="build-btn"
-                  [class.locked]="!isRoomTypeUnlocked(RoomType.DELUXE)"
-                  [title]="!isRoomTypeUnlocked(RoomType.DELUXE) ? 'Requires: ' + getRoomTypeRequirement(RoomType.DELUXE) : ''">
-            <span class="btn-main">🏰 Deluxe ({{ getRoomCost(RoomType.DELUXE) }} gold)</span>
-            <span class="room-bonus-info" *ngIf="getRoomBonusDisplay(RoomType.DELUXE)">
-              ✨ {{ getRoomBonusDisplay(RoomType.DELUXE) }}
-            </span>
-            <span *ngIf="!isRoomTypeUnlocked(RoomType.DELUXE)" class="lock-icon">🔒</span>
-          </button>
-          <button (click)="buildRoom(RoomType.ROYAL)"
-                  [disabled]="!canAffordRoom(RoomType.ROYAL) || !isRoomTypeUnlocked(RoomType.ROYAL)"
-                  class="build-btn"
-                  [class.locked]="!isRoomTypeUnlocked(RoomType.ROYAL)"
-                  [title]="!isRoomTypeUnlocked(RoomType.ROYAL) ? 'Requires: ' + getRoomTypeRequirement(RoomType.ROYAL) : ''">
-            <span class="btn-main">👑 Royal ({{ getRoomCost(RoomType.ROYAL) }} gold)</span>
-            <span class="room-bonus-info" *ngIf="getRoomBonusDisplay(RoomType.ROYAL)">
-              ✨ {{ getRoomBonusDisplay(RoomType.ROYAL) }}
-            </span>
-            <span *ngIf="!isRoomTypeUnlocked(RoomType.ROYAL)" class="lock-icon">🔒</span>
+            <span *ngIf="!isRoomTypeUnlockedByTemplate(roomType)" class="lock-icon">🔒</span>
           </button>
         </div>
       </div>
