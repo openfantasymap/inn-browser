@@ -286,9 +286,19 @@ class GameService:
 
     @staticmethod
     def _auto_assign_guests(game_state: GameState):
-        """Automatically assign waiting guests to available empty rooms"""
+        """Automatically assign waiting guests to available empty rooms (requires auto_assign upgrade)"""
+        # Check if player has auto_assign upgrade
+        has_auto_assign = game_state.purchased_upgrades.filter(
+            upgrade_template__effect_type='auto_assign_speed',
+            purchased=True
+        ).exists()
+
+        if not has_auto_assign:
+            return
+
         # Get waiting guests (not assigned to any room)
-        waiting_guests = game_state.guests.filter(room__isnull=True).order_by('-gold_per_tick')
+        # Order by patience ascending - guests about to leave get priority
+        waiting_guests = game_state.guests.filter(room__isnull=True).order_by('patience')
 
         if not waiting_guests.exists():
             return
