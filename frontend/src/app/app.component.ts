@@ -365,13 +365,11 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   getRoomCost(roomType: RoomType): number {
-    const costs = {
-      [RoomType.BASIC]: 50,
-      [RoomType.STANDARD]: 200,
-      [RoomType.DELUXE]: 800,
-      [RoomType.ROYAL]: 3000
-    };
-    return costs[roomType];
+    if (!this.gameState || !this.gameState.room_types) {
+      return 0;
+    }
+    const roomTemplate = this.gameState.room_types.find(rt => rt.id === roomType);
+    return roomTemplate ? roomTemplate.base_cost : 0;
   }
 
   canAffordRoom(roomType: RoomType): boolean {

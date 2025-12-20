@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.core.cache import cache
 from .models import (
     GameState, Room, Guest, TavernItem, Ingredient, PlayerRecipe, Upgrade, UpgradeTemplate,
-    ActiveBuff, PremiumPurchase, Achievement, PlayerAchievement
+    ActiveBuff, PremiumPurchase, Achievement, PlayerAchievement, RoomTypeTemplate
 )
 
 
@@ -19,6 +19,17 @@ class RoomSerializer(serializers.ModelSerializer):
         """Get the ID of the guest currently in this room"""
         guest = obj.current_guest.first()
         return str(guest.id) if guest else None
+
+
+class RoomTypeTemplateSerializer(serializers.ModelSerializer):
+    """Serializer for RoomTypeTemplate model"""
+    id = serializers.CharField(source='room_type_id', read_only=True)
+    required_upgrade_id = serializers.CharField(source='required_upgrade.upgrade_id', read_only=True, allow_null=True)
+
+    class Meta:
+        model = RoomTypeTemplate
+        fields = ['id', 'name', 'description', 'base_cost', 'income_multiplier',
+                  'emoji', 'required_upgrade_id']
 
 
 class GuestSerializer(serializers.ModelSerializer):
@@ -179,6 +190,7 @@ class GameStateSerializer(serializers.ModelSerializer):
     # Angular expects these field names
     tavern_items = serializers.SerializerMethodField()
     available_ingredients = serializers.SerializerMethodField()
+    room_types = serializers.SerializerMethodField()
     resources = serializers.SerializerMethodField()
     inventory = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
@@ -191,7 +203,7 @@ class GameStateSerializer(serializers.ModelSerializer):
                   'total_income_multiplier', 'auto_clean_enabled',
                   'game_speed', 'last_update', 'tavern_unlocked',
                   'tavern_items', 'inventory', 'available_ingredients',
-                  'location', 'offline_progress', 'max_offline_hours',
+                  'room_types', 'location', 'offline_progress', 'max_offline_hours',
                   'active_buffs', 'buff_multipliers', 'premium_upgrades', 'achievements']
 
     def get_resources(self, obj):
@@ -243,6 +255,18 @@ class GameStateSerializer(serializers.ModelSerializer):
 
         ingredients = Ingredient.objects.all()
         data = IngredientSerializer(ingredients, many=True).data
+        cache.set(cache_key, data, timeout=3600)  # Cache for 1 hour
+        return data
+
+    def get_room_types(self, obj):
+        """Get all room type templates with their costs (cached for 1 hour)"""
+        cache_key = 'all_room_types_serialized'
+        cached_data = cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+
+        room_types = RoomTypeTemplate.objects.all()
+        data = RoomTypeTemplateSerializer(room_types, many=True).data
         cache.set(cache_key, data, timeout=3600)  # Cache for 1 hour
         return data
 

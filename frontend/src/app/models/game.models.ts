@@ -85,6 +85,16 @@ export interface Room {
   customers_served: number;
 }
 
+export interface RoomTypeTemplate {
+  id: string;
+  name: string;
+  description: string;
+  base_cost: number;
+  income_multiplier: number;
+  emoji: string;
+  required_upgrade_id: string | null;
+}
+
 export enum ItemType {
   FOOD = 'food',
   BEVERAGE = 'beverage'
@@ -251,6 +261,7 @@ export interface InnState {
   inventory: Inventory;
   tavern_unlocked: boolean;
   available_ingredients: Ingredient[];
+  room_types: RoomTypeTemplate[];
   location: Location;
   offline_progress: OfflineProgress;
   max_offline_hours: number;
