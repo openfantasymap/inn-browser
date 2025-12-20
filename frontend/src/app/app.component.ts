@@ -351,14 +351,27 @@ export class AppComponent implements OnInit, OnDestroy {
     return '#f87171';
   }
 
+  getRoomTemplate(roomType: RoomType): any {
+    if (!this.gameState || !this.gameState.room_types) {
+      return null;
+    }
+    return this.gameState.room_types.find(rt => rt.id === roomType);
+  }
+
   getRoomTypeDisplay(roomType: RoomType): string {
+    const roomTemplate = this.getRoomTemplate(roomType);
+    if (roomTemplate) {
+      return `${roomTemplate.emoji} ${roomTemplate.name}`;
+    }
+
+    // Fallback to hardcoded values if room_types not loaded yet
     const displays: { [key in RoomType]: string } = {
       [RoomType.BASIC]: '🛏️ Basic',
       [RoomType.STANDARD]: '🏠 Standard',
       [RoomType.DELUXE]: '🏰 Deluxe',
       [RoomType.ROYAL]: '👑 Royal'
     };
-    return displays[roomType];
+    return displays[roomType] || roomType;
   }
 
   getGuestTypeDisplay(guestType: string): string {

@@ -66,6 +66,7 @@
              [class.occupied]="room.occupied"
              [class.selected]="selectedGuest"
              [class.drag-over]="dragOverRoomId === room.id"
+             [title]="getRoomTemplate(room.room_type)?.description || ''"
              (click)="selectedGuest && assignGuestToRoom(selectedGuest, room)"
              (dragover)="onRoomDragOver($event, room)"
              (dragleave)="onRoomDragLeave($event, room)"
@@ -74,6 +75,7 @@
             <span class="room-type">{{ getRoomTypeDisplay(room.room_type) }}</span>
             <span class="room-level">Lv.{{ room.level }}</span>
             <span class="room-level">💵 {{ room.income_rate }}x</span>
+            <span class="room-special-indicator" *ngIf="getRoomTemplate(room.room_type)?.species_bonuses || getRoomTemplate(room.room_type)?.type_bonuses" title="This room has special bonuses">✨</span>
           </div>
 
           <!-- Level Progress Bar -->
