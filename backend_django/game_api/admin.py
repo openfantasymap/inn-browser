@@ -407,7 +407,7 @@ class RoomTypeTemplateAdmin(admin.ModelAdmin):
 @admin.register(UpgradeTemplate)
 class UpgradeTemplateAdmin(admin.ModelAdmin):
     list_display = ['upgrade_id', 'name', 'type_display', 'cost_display', 'effect_display',
-                    'duration_display', 'instance_count']
+                    'operational_cost_display', 'duration_display', 'instance_count']
     list_filter = ['effect_type', 'is_premium', 'is_consumable']
     search_fields = ['name', 'upgrade_id', 'description']
     ordering = ['cost', 'premium_price_cents']
@@ -417,7 +417,11 @@ class UpgradeTemplateAdmin(admin.ModelAdmin):
             'fields': ('upgrade_id', 'name', 'description')
         }),
         ('Cost & Effects', {
-            'fields': ('cost', 'effect_type', 'effect_value')
+            'fields': ('cost', 'effect_type', 'effect_value', 'operational_cost_per_tick'),
+            'description': (
+                '<strong>Operational Cost:</strong> Ongoing cost per game tick (deducted from gold each tick). '
+                'Use for upgrades like workers, auto-clean, etc. Set to 0 for no ongoing cost.'
+            )
         }),
         ('Premium/Monetization', {
             'fields': ('is_premium', 'premium_price_cents', 'is_consumable'),
@@ -444,6 +448,13 @@ class UpgradeTemplateAdmin(admin.ModelAdmin):
             return format_html('<strong>${}</strong>', obj.premium_price_cents / 100)
         return format_html('{}g', obj.cost)
     cost_display.short_description = 'Cost'
+
+    def operational_cost_display(self, obj):
+        if obj.operational_cost_per_tick and obj.operational_cost_per_tick > 0:
+            return format_html('<span style="color: #f59e0b; font-weight: 600;">⚙️ {}g/tick</span>',
+                             obj.operational_cost_per_tick)
+        return format_html('<span style="color: gray;">—</span>')
+    operational_cost_display.short_description = 'Op. Cost'
 
     def effect_display(self, obj):
         return format_html('<code>{}:</code> <strong>{}</strong>',
