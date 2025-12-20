@@ -228,6 +228,11 @@ class RoomTypeTemplate(models.Model):
     # Display
     emoji = models.CharField(max_length=10, default="🏠")
 
+    # Bonus multipliers for specific species/types
+    # Format: {"Elf": 1.5, "Dwarf": 1.3} or {"wizard": 2.0, "paladin": 1.5}
+    species_bonuses = models.JSONField(default=dict, blank=True)
+    type_bonuses = models.JSONField(default=dict, blank=True)
+
     # Requirements (optional) - which upgrade is needed to unlock this room type
     required_upgrade = models.ForeignKey(
         'UpgradeTemplate',

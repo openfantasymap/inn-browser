@@ -93,6 +93,8 @@ export interface RoomTypeTemplate {
   income_multiplier: number;
   emoji: string;
   required_upgrade_id: string | null;
+  species_bonuses: { [species: string]: number };
+  type_bonuses: { [type: string]: number };
 }
 
 export enum ItemType {

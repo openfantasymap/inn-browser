@@ -107,6 +107,9 @@
               <div class="guest-species-display">
                 {{ getGuestInRoom(room.id)?.species || 'Unknown' }}
               </div>
+              <div class="room-bonus-display" *ngIf="getRoomBonus(room, getGuestInRoom(room.id)) > 1.0">
+                ✨ Room Bonus: {{ getRoomBonus(room, getGuestInRoom(room.id)) }}x
+              </div>
             </div>
             <div class="patience-bar">
               <div class="patience-fill"
@@ -134,7 +137,10 @@
                   class="build-btn"
                   [class.locked]="!isRoomTypeUnlocked(RoomType.BASIC)"
                   [title]="!isRoomTypeUnlocked(RoomType.BASIC) ? 'Requires: ' + getRoomTypeRequirement(RoomType.BASIC) : ''">
-            🛏️ Basic ({{ getRoomCost(RoomType.BASIC) }} gold)
+            <span class="btn-main">🛏️ Basic ({{ getRoomCost(RoomType.BASIC) }} gold)</span>
+            <span class="room-bonus-info" *ngIf="getRoomBonusDisplay(RoomType.BASIC)">
+              ✨ {{ getRoomBonusDisplay(RoomType.BASIC) }}
+            </span>
             <span *ngIf="!isRoomTypeUnlocked(RoomType.BASIC)" class="lock-icon">🔒</span>
           </button>
           <button (click)="buildRoom(RoomType.STANDARD)"
@@ -142,7 +148,10 @@
                   class="build-btn"
                   [class.locked]="!isRoomTypeUnlocked(RoomType.STANDARD)"
                   [title]="!isRoomTypeUnlocked(RoomType.STANDARD) ? 'Requires: ' + getRoomTypeRequirement(RoomType.STANDARD) : ''">
-            🏠 Standard ({{ getRoomCost(RoomType.STANDARD) }} gold)
+            <span class="btn-main">🏠 Standard ({{ getRoomCost(RoomType.STANDARD) }} gold)</span>
+            <span class="room-bonus-info" *ngIf="getRoomBonusDisplay(RoomType.STANDARD)">
+              ✨ {{ getRoomBonusDisplay(RoomType.STANDARD) }}
+            </span>
             <span *ngIf="!isRoomTypeUnlocked(RoomType.STANDARD)" class="lock-icon">🔒</span>
           </button>
           <button (click)="buildRoom(RoomType.DELUXE)"
@@ -150,7 +159,10 @@
                   class="build-btn"
                   [class.locked]="!isRoomTypeUnlocked(RoomType.DELUXE)"
                   [title]="!isRoomTypeUnlocked(RoomType.DELUXE) ? 'Requires: ' + getRoomTypeRequirement(RoomType.DELUXE) : ''">
-            🏰 Deluxe ({{ getRoomCost(RoomType.DELUXE) }} gold)
+            <span class="btn-main">🏰 Deluxe ({{ getRoomCost(RoomType.DELUXE) }} gold)</span>
+            <span class="room-bonus-info" *ngIf="getRoomBonusDisplay(RoomType.DELUXE)">
+              ✨ {{ getRoomBonusDisplay(RoomType.DELUXE) }}
+            </span>
             <span *ngIf="!isRoomTypeUnlocked(RoomType.DELUXE)" class="lock-icon">🔒</span>
           </button>
           <button (click)="buildRoom(RoomType.ROYAL)"
@@ -158,7 +170,10 @@
                   class="build-btn"
                   [class.locked]="!isRoomTypeUnlocked(RoomType.ROYAL)"
                   [title]="!isRoomTypeUnlocked(RoomType.ROYAL) ? 'Requires: ' + getRoomTypeRequirement(RoomType.ROYAL) : ''">
-            👑 Royal ({{ getRoomCost(RoomType.ROYAL) }} gold)
+            <span class="btn-main">👑 Royal ({{ getRoomCost(RoomType.ROYAL) }} gold)</span>
+            <span class="room-bonus-info" *ngIf="getRoomBonusDisplay(RoomType.ROYAL)">
+              ✨ {{ getRoomBonusDisplay(RoomType.ROYAL) }}
+            </span>
             <span *ngIf="!isRoomTypeUnlocked(RoomType.ROYAL)" class="lock-icon">🔒</span>
           </button>
         </div>

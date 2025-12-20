@@ -126,7 +126,10 @@ class GameService:
             # Calculate hourly income from occupied rooms
             hourly_income = 0.0
             for room in game_state.rooms.filter(occupied=True):
-                hourly_income += room.income_rate * game_state.total_income_multiplier
+                guest = room.current_guest.first()
+                if guest:
+                    room_bonus = GameService._calculate_room_bonus(room, guest)
+                    hourly_income += room.income_rate * guest.gold_per_tick * game_state.total_income_multiplier * room_bonus
 
             # Calculate total offline earnings
             offline_earnings = hourly_income * effective_hours
@@ -162,6 +165,25 @@ class GameService:
         return game_state
 
     @staticmethod
+    def _calculate_room_bonus(room, guest) -> float:
+        """Calculate bonus multiplier based on room type and guest compatibility"""
+        bonus_multiplier = 1.0
+
+        # Check species bonuses
+        if room.room_template.species_bonuses:
+            species_bonus = room.room_template.species_bonuses.get(guest.species, 0)
+            if species_bonus > 0:
+                bonus_multiplier = max(bonus_multiplier, species_bonus)
+
+        # Check guest type bonuses
+        if room.room_template.type_bonuses:
+            type_bonus = room.room_template.type_bonuses.get(guest.guest_type, 0)
+            if type_bonus > 0:
+                bonus_multiplier = max(bonus_multiplier, type_bonus)
+
+        return bonus_multiplier
+
+    @staticmethod
     def _process_single_tick(game_state: GameState):
         """Process a single game tick"""
         # Generate income from occupied rooms
@@ -170,7 +192,9 @@ class GameService:
                 # Get the guest in this room (using reverse relation)
                 guest = room.current_guest.first()
                 if guest:
-                    income = room.income_rate * guest.gold_per_tick * game_state.total_income_multiplier
+                    # Calculate room bonus based on guest compatibility
+                    room_bonus = GameService._calculate_room_bonus(room, guest)
+                    income = room.income_rate * guest.gold_per_tick * game_state.total_income_multiplier * room_bonus
                     game_state.gold += income
 
                     # Decrease room cleanliness

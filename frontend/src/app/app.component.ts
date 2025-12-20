@@ -376,6 +376,62 @@ export class AppComponent implements OnInit, OnDestroy {
     return this.gameState ? this.gameState.resources.gold >= this.getRoomCost(roomType) : false;
   }
 
+  getRoomBonus(room: Room, guest: Guest | null): number {
+    if (!guest || !this.gameState || !this.gameState.room_types) {
+      return 1.0;
+    }
+
+    const roomTemplate = this.gameState.room_types.find(rt => rt.id === room.room_type);
+    if (!roomTemplate) {
+      return 1.0;
+    }
+
+    let bonus = 1.0;
+
+    // Check species bonuses
+    if (roomTemplate.species_bonuses && guest.species in roomTemplate.species_bonuses) {
+      const speciesBonus = roomTemplate.species_bonuses[guest.species];
+      bonus = Math.max(bonus, speciesBonus);
+    }
+
+    // Check type bonuses
+    if (roomTemplate.type_bonuses && guest.guest_type in roomTemplate.type_bonuses) {
+      const typeBonus = roomTemplate.type_bonuses[guest.guest_type];
+      bonus = Math.max(bonus, typeBonus);
+    }
+
+    return bonus;
+  }
+
+  getRoomBonusDisplay(roomType: RoomType): string {
+    if (!this.gameState || !this.gameState.room_types) {
+      return '';
+    }
+
+    const roomTemplate = this.gameState.room_types.find(rt => rt.id === roomType);
+    if (!roomTemplate) {
+      return '';
+    }
+
+    const bonuses: string[] = [];
+
+    // Species bonuses
+    if (roomTemplate.species_bonuses && Object.keys(roomTemplate.species_bonuses).length > 0) {
+      for (const [species, bonus] of Object.entries(roomTemplate.species_bonuses)) {
+        bonuses.push(`${species}: ${bonus}x`);
+      }
+    }
+
+    // Type bonuses
+    if (roomTemplate.type_bonuses && Object.keys(roomTemplate.type_bonuses).length > 0) {
+      for (const [type, bonus] of Object.entries(roomTemplate.type_bonuses)) {
+        bonuses.push(`${type}: ${bonus}x`);
+      }
+    }
+
+    return bonuses.length > 0 ? bonuses.join(', ') : '';
+  }
+
   // Tavern functions
   selectedGuestForServing: Guest | null = null;
   ItemType = ItemType;

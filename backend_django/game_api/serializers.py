@@ -29,7 +29,7 @@ class RoomTypeTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = RoomTypeTemplate
         fields = ['id', 'name', 'description', 'base_cost', 'income_multiplier',
-                  'emoji', 'required_upgrade_id']
+                  'emoji', 'required_upgrade_id', 'species_bonuses', 'type_bonuses']
 
 
 class GuestSerializer(serializers.ModelSerializer):

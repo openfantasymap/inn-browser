@@ -1515,6 +1515,38 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 8px;
 }
 
+.room-bonus-display {
+  font-size: 0.8em;
+  color: #f59e0b;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 6px;
+  margin-top: 6px;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+  animation: bonusGlow 2s ease-in-out infinite;
+}
+
+@keyframes bonusGlow {
+  0%, 100% { box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3); }
+  50% { box-shadow: 0 4px 12px rgba(245, 158, 11, 0.6); }
+}
+
+.room-bonus-info {
+  display: block;
+  font-size: 0.75em;
+  color: #fbbf24;
+  margin-top: 4px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.build-btn .btn-main {
+  display: block;
+}
+
 /* Achievement Notifications */
 .achievement-notifications {
   position: fixed;
