@@ -13,11 +13,13 @@ export class ResourcesPanelComponent {
   @Input() gameState!: InnState;
   showIncomeBreakdown = false;
   showMultiplierBreakdown = false;
+  showAchievements = false;
 
   toggleIncomeBreakdown(): void {
     this.showIncomeBreakdown = !this.showIncomeBreakdown;
     if (this.showIncomeBreakdown) {
       this.showMultiplierBreakdown = false;
+      this.showAchievements = false;
     }
   }
 
@@ -25,6 +27,15 @@ export class ResourcesPanelComponent {
     this.showMultiplierBreakdown = !this.showMultiplierBreakdown;
     if (this.showMultiplierBreakdown) {
       this.showIncomeBreakdown = false;
+      this.showAchievements = false;
+    }
+  }
+
+  toggleAchievements(): void {
+    this.showAchievements = !this.showAchievements;
+    if (this.showAchievements) {
+      this.showIncomeBreakdown = false;
+      this.showMultiplierBreakdown = false;
     }
   }
 
@@ -75,5 +86,31 @@ export class ResourcesPanelComponent {
 
   getEstimatedOfflineEarnings(): number {
     return this.getPassiveIncomePerHour() * this.gameState.max_offline_hours;
+  }
+
+  // Achievements helpers
+  getCompletedAchievements() {
+    if (!this.gameState || !this.gameState.all_achievements) return [];
+    return this.gameState.all_achievements.filter(a => a.is_completed);
+  }
+
+  getInProgressAchievements() {
+    if (!this.gameState || !this.gameState.all_achievements) return [];
+    return this.gameState.all_achievements.filter(a => !a.is_completed && a.progress > 0);
+  }
+
+  getLockedAchievements() {
+    if (!this.gameState || !this.gameState.all_achievements) return [];
+    return this.gameState.all_achievements.filter(a => a.progress === 0);
+  }
+
+  getTotalAchievements(): number {
+    if (!this.gameState || !this.gameState.all_achievements) return 0;
+    return this.gameState.all_achievements.length;
+  }
+
+  getProgressPercentage(achievement: any): number {
+    if (achievement.requirement_value === 0) return 0;
+    return Math.min(100, (achievement.progress / achievement.requirement_value) * 100);
   }
 }
