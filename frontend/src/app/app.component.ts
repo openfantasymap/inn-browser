@@ -484,14 +484,14 @@ export class AppComponent implements OnInit, OnDestroy {
     // Species bonuses
     if (roomTemplate.species_bonuses && Object.keys(roomTemplate.species_bonuses).length > 0) {
       for (const [species, bonus] of Object.entries(roomTemplate.species_bonuses)) {
-        bonuses.push(`${species}: ${bonus}x`);
+        bonuses.push(`${species}: x${bonus}`);
       }
     }
 
     // Type bonuses
     if (roomTemplate.type_bonuses && Object.keys(roomTemplate.type_bonuses).length > 0) {
       for (const [type, bonus] of Object.entries(roomTemplate.type_bonuses)) {
-        bonuses.push(`${type}: ${bonus}x`);
+        bonuses.push(`${type}: x${bonus}`);
       }
     }
 

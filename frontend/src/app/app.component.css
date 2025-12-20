@@ -392,6 +392,7 @@ h1, h2, h3, h4, h5, h6 {
   cursor: pointer;
   font-weight: bold;
   transition: all 0.3s;
+  min-width: calc(100% / 5);
 }
 
 .build-btn:hover:not(:disabled) {

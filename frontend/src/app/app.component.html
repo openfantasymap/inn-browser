@@ -74,7 +74,12 @@
           <div class="room-header">
             <span class="room-type">{{ getRoomTypeDisplay(room.room_type) }}</span>
             <span class="room-level">Lv.{{ room.level }}</span>
-            <span class="room-level">💵 {{ room.income_rate }}x</span>
+            @if(getRoomBonus(room, getGuestInRoom(room.id)) !== 1.0){
+              <span class="room-level">✨ x{{ getRoomBonus(room, getGuestInRoom(room.id)) }}</span>
+            }
+            @else {
+              <span class="room-level">x{{ room.income_rate }}</span>
+            }
             <!--<span class="room-special-indicator" *ngIf="getRoomTemplate(room.room_type)?.species_bonuses || getRoomTemplate(room.room_type)?.type_bonuses" title="This room has special bonuses">✨</span>-->
           </div>
 
