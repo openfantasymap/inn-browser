@@ -212,6 +212,7 @@ export interface Upgrade {
   premium_price_usd?: number;
   duration_seconds?: number;
   is_consumable?: boolean;
+  requires?: string|null;
 }
 
 export interface Resources {

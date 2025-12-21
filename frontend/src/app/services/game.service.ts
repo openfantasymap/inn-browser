@@ -194,8 +194,10 @@ export class GameService {
 
   // Helper method to get available (not purchased) upgrades
   getAvailableUpgrades(gameState: InnState | null): Upgrade[] {
+    const purchased = gameState?.upgrades.map(x=>x.purchased?x.id:null);
     if (!gameState) return [];
-    return gameState.upgrades.filter(upgrade => !upgrade.purchased && upgrade.cost < gameState.resources.gold);
+    //@ts-ignore
+    return gameState.upgrades.filter(upgrade => !upgrade.purchased && upgrade.cost < gameState.resources.gold && (upgrade.requires === null || (upgrade.requires !== null && purchased?.includes(upgrade.requires))));
   }
 
   // Helper method to get acquired (purchased) upgrades
