@@ -149,6 +149,34 @@ class Command(BaseCommand):
                 'effect_value': 8.0,
                 'operational_cost_per_tick': 0.0  # One-time unlock, no ongoing cost
             },
+            # Auto-assign upgrades
+            {
+                'upgrade_id': 'upgrade_auto_assign_1',
+                'name': 'Hire Assistant Greeter',
+                'description': 'Assistant helps assign desperate guests (patience < 30%) to available rooms',
+                'cost': 250.0,
+                'effect_type': 'auto_assign_speed',
+                'effect_value': 30.0,  # Patience threshold
+                'operational_cost_per_tick': 2.0
+            },
+            {
+                'upgrade_id': 'upgrade_auto_assign_2',
+                'name': 'Professional Reception Service',
+                'description': 'Trained staff auto-assign moderately impatient guests (patience < 50%) to rooms',
+                'cost': 600.0,
+                'effect_type': 'auto_assign_speed',
+                'effect_value': 50.0,  # Patience threshold
+                'operational_cost_per_tick': 4.0
+            },
+            {
+                'upgrade_id': 'upgrade_auto_assign_3',
+                'name': 'Enchanted Guest Directory',
+                'description': 'Magical system instantly assigns guests (patience < 70%) to optimal rooms',
+                'cost': 1500.0,
+                'effect_type': 'auto_assign_speed',
+                'effect_value': 70.0,  # Patience threshold
+                'operational_cost_per_tick': 8.0
+            },
         ]
 
         for upgrade_data in upgrade_templates:
