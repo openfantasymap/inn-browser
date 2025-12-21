@@ -12,12 +12,21 @@
 
       <div class="breakdown-section">
         <div class="breakdown-header">Guest Income (per tick)</div>
-        <div class="breakdown-item" *ngFor="let guest of getActiveGuests()">
-          <span class="breakdown-label">{{ guest.name }} ({{ guest.species }})</span>
-          <span class="breakdown-value">+{{ guest.gold_per_tick | number:'1.1-2' }}</span>
+        <div class="breakdown-item-detailed" *ngFor="let guest of getActiveGuests()">
+          <div class="guest-income-header">
+            <span class="breakdown-label">{{ guest.name }} ({{ guest.species }})</span>
+            <span class="breakdown-value">+{{ getGuestActualIncome(guest) | number:'1.1-2' }}</span>
+          </div>
+          <div class="guest-income-formula">
+            <span class="formula-part">{{ guest.gold_per_tick | number:'1.1-2' }} base</span>
+            <span class="formula-operator">×</span>
+            <span class="formula-part">{{ getGuestIncomeBreakdown(guest).roomRate | number:'1.1-1' }} room</span>
+            <span class="formula-operator" *ngIf="getGuestIncomeBreakdown(guest).roomBonus > 1">×</span>
+            <span class="formula-part bonus-highlight" *ngIf="getGuestIncomeBreakdown(guest).roomBonus > 1">{{ getGuestIncomeBreakdown(guest).roomBonus | number:'1.1-1' }} ✨ bonus</span>
+          </div>
         </div>
         <div class="breakdown-total">
-          <span>Base Income:</span>
+          <span>Total Base Income:</span>
           <span>{{ getTotalGuestIncome() | number:'1.1-2' }}/tick</span>
         </div>
       </div>

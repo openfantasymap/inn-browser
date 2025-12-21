@@ -133,6 +133,44 @@
   font-size: 0.9em;
 }
 
+.breakdown-item-detailed {
+  padding: 8px;
+  border-radius: 4px;
+  background: #fef3c7;
+  margin-bottom: 6px;
+  font-size: 0.9em;
+}
+
+.guest-income-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.guest-income-formula {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85em;
+  color: #92400e;
+  padding-left: 8px;
+}
+
+.formula-part {
+  color: #78350f;
+}
+
+.formula-operator {
+  color: #92400e;
+  font-weight: bold;
+}
+
+.bonus-highlight {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
 .breakdown-label {
   color: #78350f;
   font-weight: 500;

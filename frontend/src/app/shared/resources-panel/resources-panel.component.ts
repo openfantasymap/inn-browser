@@ -52,7 +52,69 @@ export class ResourcesPanelComponent {
   }
 
   getTotalGuestIncome(): number {
-    return this.getActiveGuests().reduce((sum, guest) => sum + guest.gold_per_tick, 0);
+    return this.getActiveGuests().reduce((sum, guest) => {
+      return sum + this.getGuestActualIncome(guest);
+    }, 0);
+  }
+
+  // Room-specific income calculations
+  getRoomForGuest(guest: any) {
+    if (!this.gameState || !this.gameState.rooms || !guest.room_id) return null;
+    return this.gameState.rooms.find(r => r.id === guest.room_id);
+  }
+
+  getRoomTemplate(roomType: string) {
+    if (!this.gameState || !this.gameState.room_types) return null;
+    return this.gameState.room_types.find(rt => rt.id === roomType);
+  }
+
+  getRoomBonus(room: any, guest: any): number {
+    if (!room || !guest) return 1.0;
+
+    const roomTemplate = this.getRoomTemplate(room.room_type);
+    if (!roomTemplate) return 1.0;
+
+    let bonusMultiplier = 1.0;
+
+    // Check species bonuses
+    if (roomTemplate.species_bonuses && roomTemplate.species_bonuses[guest.species]) {
+      bonusMultiplier = Math.max(bonusMultiplier, roomTemplate.species_bonuses[guest.species]);
+    }
+
+    // Check guest type bonuses
+    if (roomTemplate.type_bonuses && roomTemplate.type_bonuses[guest.guest_type]) {
+      bonusMultiplier = Math.max(bonusMultiplier, roomTemplate.type_bonuses[guest.guest_type]);
+    }
+
+    return bonusMultiplier;
+  }
+
+  getGuestActualIncome(guest: any): number {
+    const room = this.getRoomForGuest(guest);
+    if (!room) return guest.gold_per_tick;
+
+    const roomBonus = this.getRoomBonus(room, guest);
+    return guest.gold_per_tick * room.income_rate * roomBonus;
+  }
+
+  getGuestIncomeBreakdown(guest: any) {
+    const room = this.getRoomForGuest(guest);
+    if (!room) {
+      return {
+        base: guest.gold_per_tick,
+        roomRate: 1,
+        roomBonus: 1,
+        total: guest.gold_per_tick
+      };
+    }
+
+    const roomBonus = this.getRoomBonus(room, guest);
+    return {
+      base: guest.gold_per_tick,
+      roomRate: room.income_rate,
+      roomBonus: roomBonus,
+      total: guest.gold_per_tick * room.income_rate * roomBonus
+    };
   }
 
   getBaseMultiplier(): number {
