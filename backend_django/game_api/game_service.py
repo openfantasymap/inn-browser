@@ -63,7 +63,7 @@ class GameService:
         game_state, created = GameState.objects.get_or_create(
             player_id=player_id,
             defaults={
-                'gold': 100.0,
+                'gold': 0.0,
                 'reputation': 0.0,
                 'max_guests': 5,
                 'total_income_multiplier': 1.0,
@@ -72,8 +72,8 @@ class GameService:
                 'tavern_unlocked': False,
                 'max_offline_hours': 12.0,
                 # Random map location (100x100 grid)
-                'map_x': random.randint(0, 99),
-                'map_y': random.randint(0, 99),
+                'map_x': random.randint(-180, 180),
+                'map_y': random.randint(-90, 90),
             }
         )
 
@@ -220,8 +220,12 @@ class GameService:
 
         # Auto-clean if enabled
         if game_state.auto_clean_enabled:
+            total_multiplier = 1
+            for upgrade in game_state.purchased_upgrades.select_related('upgrade_template').filter(upgrade_template__effect_type="clean_efficiency"):
+                total_multiplier = total_multiplier*(1+(upgrade.effect_value/1000))
+            total_multiplier = max(1, total_multiplier)
             for room in game_state.rooms.all():
-                room.cleanliness = min(100, room.cleanliness + 2.0)
+                room.cleanliness = min(100, (room.cleanliness + 0.8)*total_multiplier)
                 room.save()
 
         # Auto-assign waiting guests to available rooms

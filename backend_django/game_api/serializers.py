@@ -232,7 +232,8 @@ class GameStateSerializer(serializers.ModelSerializer):
     def get_inventory(self, obj):
         """Get inventory in the format expected by Angular frontend"""
         return {
-            'items': obj.item_inventory
+            'items': obj.item_inventory,
+            'ingredients': obj.ingredient_inventory
         }
 
     def get_tavern_items(self, obj):
@@ -268,7 +269,7 @@ class GameStateSerializer(serializers.ModelSerializer):
 
         room_types = RoomTypeTemplate.objects.all()
         data = RoomTypeTemplateSerializer(room_types, many=True).data
-        cache.set(cache_key, data, timeout=3600)  # Cache for 1 hour
+        #cache.set(cache_key, data, timeout=3600)  # Cache for 1 hour
         return data
 
     def get_recipes(self, obj):
