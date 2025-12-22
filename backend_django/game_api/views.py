@@ -62,7 +62,8 @@ def get_upgrades(request):
                 'is_premium': template.is_premium,
                 'premium_price_cents': template.premium_price_cents,
                 'duration_seconds': template.duration_seconds,
-                'is_consumable': template.is_consumable
+                'is_consumable': template.is_consumable,
+                'requires': template.required_upgrade_id,
             })
 
         return Response(upgrades_data)

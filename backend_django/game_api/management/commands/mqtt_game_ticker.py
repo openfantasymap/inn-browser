@@ -90,7 +90,7 @@ class Command(BaseCommand):
                         updated_state = GameState.objects.prefetch_related(
                             'rooms',
                             'guests',
-                            'player_recipes__item',
+                            #'player_recipes__item',
                             'purchased_upgrades__upgrade_template',
                             'active_buffs__upgrade_template'
                         ).get(player_id=game_state.player_id)
@@ -149,7 +149,7 @@ class Command(BaseCommand):
         return queryset.prefetch_related(
             'rooms',
             'guests',
-            'player_recipes__item',
+            #'player_recipes__item',
             'purchased_upgrades__upgrade_template',
             'active_buffs__upgrade_template'
         )

@@ -407,8 +407,9 @@ class RoomTypeTemplateAdmin(admin.ModelAdmin):
 @admin.register(UpgradeTemplate)
 class UpgradeTemplateAdmin(admin.ModelAdmin):
     list_display = ['upgrade_id', 'name', 'type_display', 'cost_display', 'effect_display',
-                    'operational_cost_display', 'duration_display', 'instance_count']
+                    'operational_cost_display', 'duration_display', 'instance_count', 'required_upgrade', 'cost', 'effect_value']
     list_filter = ['effect_type', 'is_premium', 'is_consumable']
+    list_editable = ["required_upgrade", 'cost', 'effect_value']
     search_fields = ['name', 'upgrade_id', 'description']
     ordering = ['cost', 'premium_price_cents']
 

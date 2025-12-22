@@ -63,7 +63,7 @@ class GameService:
         game_state, created = GameState.objects.get_or_create(
             player_id=player_id,
             defaults={
-                'gold': 100.0,
+                'gold': 0.0,
                 'reputation': 0.0,
                 'max_guests': 5,
                 'total_income_multiplier': 1.0,
@@ -72,8 +72,8 @@ class GameService:
                 'tavern_unlocked': False,
                 'max_offline_hours': 12.0,
                 # Random map location (100x100 grid)
-                'map_x': random.randint(0, 99),
-                'map_y': random.randint(0, 99),
+                'map_x': random.randint(-180, 180),
+                'map_y': random.randint(-90, 90),
             }
         )
 
@@ -220,8 +220,12 @@ class GameService:
 
         # Auto-clean if enabled
         if game_state.auto_clean_enabled:
+            total_multiplier = 1
+            for upgrade in game_state.purchased_upgrades.select_related('upgrade_template').filter(upgrade_template__effect_type="clean_efficiency"):
+                total_multiplier = total_multiplier*(1+(upgrade.effect_value/1000))
+            total_multiplier = max(1, total_multiplier)
             for room in game_state.rooms.all():
-                room.cleanliness = min(100, room.cleanliness + 2.0)
+                room.cleanliness = min(100, (room.cleanliness + 0.8)*total_multiplier)
                 room.save()
 
         # Auto-assign waiting guests to available rooms
@@ -311,18 +315,27 @@ class GameService:
     @staticmethod
     def _auto_assign_guests(game_state: GameState):
         """Automatically assign waiting guests to available empty rooms (requires auto_assign upgrade)"""
-        # Check if player has auto_assign upgrade
-        has_auto_assign = game_state.purchased_upgrades.filter(
+        # Get the highest auto_assign_speed upgrade (highest patience threshold)
+        auto_assign_upgrades = game_state.purchased_upgrades.filter(
             upgrade_template__effect_type='auto_assign_speed',
             purchased_at__isnull=False
-        ).exists()
+        ).select_related('upgrade_template')
 
-        if not has_auto_assign:
+        if not auto_assign_upgrades.exists():
             return
 
-        # Get waiting guests (not assigned to any room)
+        # Get the highest patience threshold from purchased upgrades
+        patience_threshold = max(
+            upgrade.upgrade_template.effect_value
+            for upgrade in auto_assign_upgrades
+        )
+
+        # Get waiting guests (not assigned to any room) below patience threshold
         # Order by patience ascending - guests about to leave get priority
-        waiting_guests = game_state.guests.filter(room__isnull=True).order_by('patience')
+        waiting_guests = game_state.guests.filter(
+            room__isnull=True,
+            patience__lt=patience_threshold
+        ).order_by('patience')
 
         if not waiting_guests.exists():
             return
